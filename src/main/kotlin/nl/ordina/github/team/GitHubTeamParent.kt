@@ -9,12 +9,12 @@ data class GitHubTeamParent(
     val url: String,
     val members_url: String,
     val name: String,
-    val description: String?,
+    val description: String? = null,
     val permission: String,
-    val privacy: String?,
-    val notification_setting: String?,
+    val privacy: String? = null,
+    val notification_setting: String? = null,
     val html_url: String,
     val repositories_url: String,
     val slug: String,
-    val ldap_dn: String?
+    val ldap_dn: String? = null
 )

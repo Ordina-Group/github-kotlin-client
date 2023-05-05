@@ -7,7 +7,7 @@ plugins {
 }
 
 group = "nl.ordina"
-version = "0.0.1-SNAPSHOT"
+version = "0.0.1"
 
 val httpkVersion = "4.41.3.0"
 val kotestVersion = "5.6.1"
