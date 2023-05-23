@@ -27,36 +27,28 @@ internal object GitHubOrganizationClient {
     }
 
     fun getTeams(organizationName: String): List<GitHubTeam> {
-        val lens = Body.auto<List<GetTeamResponse>>().toLens()
-        val request = GetRequest("orgs/$organizationName/teams")
+        val request = PaginatedRequest<GetTeamResponse>("orgs/$organizationName/teams")
 
-        return client(request).let(lens).map { it.withOrganization(organizationName) }
+        return request(client).map { it.withOrganization(organizationName) }
+    }
+
+    fun createTeam(organizationName: String, teamName: String, description: String?): GitHubTeam {
+        val lens = Body.auto<GetTeamResponse>().toLens()
+        val request = PostRequest("orgs/$organizationName/teams", CreateTeamRequest(teamName, description))
+
+        return lens(client(request)).withOrganization(organizationName)
     }
 
     fun getRepositories(organizationName: String): List<GitHubRepository> {
-        val lens = Body.auto<List<GetRepositoryResponse>>().toLens()
-        val request = GetRequest("orgs/$organizationName/repos")
-        val response = client(request)
+        val request = PaginatedRequest<GetRepositoryResponse>("orgs/$organizationName/repos")
 
-        return when (response.status) {
-            Status.OK -> lens(response).map { it.withOwner(organizationName) }
-            Status.NOT_FOUND -> emptyList()
-            // TODO Deal with unexpected responses
-            else -> emptyList()
-        }
+        return request(client).map { it.withOwner(organizationName) }
     }
 
     fun getMembers(organizationName: String): List<GitHubOrganizationMember> {
-        val lens = Body.auto<List<GitHubOrganizationMember>>().toLens()
-        val request = GetRequest("orgs/$organizationName/members")
-        val response = client(request)
+        val request = PaginatedRequest<GitHubOrganizationMember>("orgs/$organizationName/members")
 
-        return when (response.status) {
-            Status.OK -> lens(response)
-            Status.NOT_FOUND -> emptyList()
-            // TODO Deal with unexpected responses
-            else -> emptyList()
-        }
+        return request(client)
     }
 
     fun invite(organizationName: String, inviteeId: Int): GitHubOrganizationInvite? {
@@ -115,6 +107,12 @@ internal object GitHubOrganizationClient {
     }
 
     @Serializable
+    internal data class CreateTeamRequest(
+        val name: String,
+        val description: String?
+    )
+
+    @Serializable
     internal data class GetRepositoryResponse(
         val id: Int,
         val name: String,
@@ -130,6 +128,7 @@ internal object GitHubOrganizationClient {
     }
 }
 
+@Serializable
 data class GitHubOrganizationInviter(
     val name: String? = null,
     val email: String? = null,

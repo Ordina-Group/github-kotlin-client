@@ -1,7 +1,9 @@
 package nl.ordina.github.organization
 
+import kotlinx.serialization.Serializable
 import nl.ordina.github.internal.GitHubOrganizationInviter
 
+@Serializable
 data class GitHubOrganizationInvite(
     val id: Int,
     val login: String?,

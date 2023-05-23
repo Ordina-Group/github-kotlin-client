@@ -22,6 +22,15 @@ data class GitHubTeam(
     val repositories_url: String,
     val parent: GitHubTeamParent?
 ) {
-    fun getMembers(): List<GitHubTeamMember> = GitHubTeamClient.getMembers(organization, slug)
-    fun getRepositories(): List<GitHubTeamRepository> = GitHubTeamClient.getRepositories(organization, slug)
+    fun getMembers(): List<GitHubTeamMember> =
+        GitHubTeamClient.getMembers(organization, slug)
+
+    fun addMember(username: String): Unit =
+        GitHubTeamClient.addMember(organization, slug, username)
+
+    fun getRepositories(): List<GitHubTeamRepository> =
+        GitHubTeamClient.getRepositories(organization, slug)
+
+    fun addRepository(repositoryName: String, permission: String) =
+        GitHubTeamClient.addRepository(organization, slug, repositoryName, permission)
 }

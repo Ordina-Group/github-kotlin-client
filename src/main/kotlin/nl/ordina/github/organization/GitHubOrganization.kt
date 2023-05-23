@@ -14,6 +14,10 @@ data class GitHubOrganization internal constructor(
     val company: String? = null
 ) {
     fun getTeams(): List<GitHubTeam> = GitHubOrganizationClient.getTeams(login)
+
+    fun createTeam(teamName: String, teamDescription: String? = null): GitHubTeam =
+        GitHubOrganizationClient.createTeam(login, teamName, teamDescription)
+
     fun getRepositories(): List<GitHubRepository> = GitHubOrganizationClient.getRepositories(login)
     fun getMembers(): List<GitHubOrganizationMember> = GitHubOrganizationClient.getMembers(login)
 

@@ -1,29 +1,37 @@
 package nl.ordina.github.internal
 
-import nl.ordina.github.*
+import kotlinx.serialization.Serializable
+import nl.ordina.github.client
 import nl.ordina.github.team.GitHubTeamMember
 import nl.ordina.github.team.GitHubTeamRepository
-import org.http4k.core.Status
 
 internal object GitHubTeamClient {
-
     fun getMembers(organizationName: String, teamSlug: String): List<GitHubTeamMember> {
-        val lens = getLens<List<GitHubTeamMember>>()
-        val request = GetRequest("orgs/$organizationName/teams/$teamSlug/members")
+        val request = PaginatedRequest<GitHubTeamMember>("orgs/$organizationName/teams/$teamSlug/members")
 
-        return client(request).let(lens)
+        return request(client)
+    }
+
+    fun addMember(organizationName: String, teamSlug: String, username: String): Unit {
+        val request = PutRequest<Any>("/orgs/$organizationName/teams/$teamSlug/memberships/$username")
+
+        client(request)
     }
 
     fun getRepositories(organizationName: String, teamSlug: String): List<GitHubTeamRepository> {
-        val lens = getLens<List<GitHubTeamRepository>>()
-        val request = GetRequest("/orgs/$organizationName/teams/$teamSlug/repos")
-        val response = client(request)
+        val request = PaginatedRequest<GitHubTeamRepository>("/orgs/$organizationName/teams/$teamSlug/repos")
 
-        return when (response.status) {
-            Status.OK -> lens(response)
-            Status.NOT_FOUND -> emptyList()
-            // TODO Deal with unexpected responses
-            else -> emptyList()
-        }
+        return request(client)
     }
+
+    fun addRepository(organizationName: String, teamSlug: String, repositoryName: String, permission: String) {
+        val uri = "/orgs/$organizationName/teams/$teamSlug/repos/$organizationName/$repositoryName"
+        val request = PutRequest(uri, AddRepositoryRequest(permission))
+
+        client(request)
+    }
+
+    @Serializable
+    data class AddRepositoryRequest(val permission: String)
 }
+

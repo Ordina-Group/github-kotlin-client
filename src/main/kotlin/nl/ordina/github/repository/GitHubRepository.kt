@@ -16,5 +16,5 @@ data class GitHubRepository internal constructor(
     fun getAllCollaborators() = GitHubRepositoryClient.getCollaborators(owner, name, Affiliation.ALL)
     fun getDirectCollaborators() = GitHubRepositoryClient.getCollaborators(owner, name, Affiliation.DIRECT)
     fun getOutsideCollaborators() = GitHubRepositoryClient.getCollaborators(owner, name, Affiliation.OUTSIDE)
-    fun transfer(newOwner: String) = GitHubRepositoryClient.transfer(newOwner)
+    fun transfer(newOwner: String) = GitHubRepositoryClient.transfer(owner, name, newOwner)
 }

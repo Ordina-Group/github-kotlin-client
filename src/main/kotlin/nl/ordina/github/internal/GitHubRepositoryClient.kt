@@ -40,25 +40,24 @@ internal object GitHubRepositoryClient {
         repositoryName: String,
         affiliation: Affiliation
     ): List<GitHubRepositoryCollaborator> {
-        val lens = Body.auto<List<GitHubRepositoryCollaborator>>().toLens()
-        val request = GetRequest("/repos/$owner/$repositoryName/collaborators")
-            .query("affiliation", affiliation.value)
-        val response = client(request)
-
-        return when (response.status) {
-            Status.OK -> lens(response)
-            else -> emptyList()
+        val request = ListRequest<GitHubRepositoryCollaborator>("/repos/$owner/$repositoryName/collaborators") {
+            it.query("affiliation", affiliation.value)
         }
+
+        return request(client)
     }
 
     fun transfer(
+        currentOwner: String,
+        currentRepositoryName: String,
         newOwner: String,
         teamIds: List<Int> = emptyList(),
         newRepositoryName: String? = null
-    ): GitHubRepository {
-        TransferRepositoryRequest(newOwner, teamIds, newRepositoryName)
+    ) {
+        val request = PostRequest("/repos/$currentOwner/$currentRepositoryName/transfer", TransferRepositoryRequest(newOwner, teamIds, newRepositoryName))
+        client(request)
 
-        TODO()
+
     }
 
     @Serializable
