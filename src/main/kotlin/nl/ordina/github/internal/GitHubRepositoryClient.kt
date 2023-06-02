@@ -54,10 +54,11 @@ internal object GitHubRepositoryClient {
         teamIds: List<Int> = emptyList(),
         newRepositoryName: String? = null
     ) {
-        val request = PostRequest("/repos/$currentOwner/$currentRepositoryName/transfer", TransferRepositoryRequest(newOwner, teamIds, newRepositoryName))
+        val request = PostRequest(
+            "/repos/$currentOwner/$currentRepositoryName/transfer",
+            TransferRepositoryRequest(newOwner, teamIds, newRepositoryName)
+        )
         client(request)
-
-
     }
 
     @Serializable

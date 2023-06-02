@@ -19,7 +19,7 @@ class GitHubOrganizationSpec : WordSpec({
         "be able to list repositories belonging to the organization when the organization has no repositories" {
             GitHubClient(httpClient)
 
-            every { httpClient.invoke(matchUri("orgs/${Defaults.organization.login}/repos")) }
+            every { httpClient.invoke(matchUri("orgs/${Defaults.organization.login}/repos?page=1")) }
                 .returns(Response(Status.OK).body("[]"))
 
             val repositories = Defaults.organization.getRepositories()
@@ -30,7 +30,7 @@ class GitHubOrganizationSpec : WordSpec({
         "be able to list repositories belonging to the organization when the organization has repositories" {
             GitHubClient(httpClient)
 
-            every { httpClient.invoke(matchUri("orgs/${Defaults.organization.login}/repos")) }
+            every { httpClient.invoke(matchUri("orgs/${Defaults.organization.login}/repos?page=1")) }
                 .returns(Response(Status.OK).body(Json.encodeToString(listOf(Defaults.repository))))
 
             val repositories = Defaults.organization.getRepositories()

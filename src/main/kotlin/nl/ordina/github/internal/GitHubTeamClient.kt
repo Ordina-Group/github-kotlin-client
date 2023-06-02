@@ -12,7 +12,7 @@ internal object GitHubTeamClient {
         return request(client)
     }
 
-    fun addMember(organizationName: String, teamSlug: String, username: String): Unit {
+    fun addMember(organizationName: String, teamSlug: String, username: String) {
         val request = PutRequest<Any>("/orgs/$organizationName/teams/$teamSlug/memberships/$username")
 
         client(request)
@@ -34,4 +34,3 @@ internal object GitHubTeamClient {
     @Serializable
     data class AddRepositoryRequest(val permission: String)
 }
-

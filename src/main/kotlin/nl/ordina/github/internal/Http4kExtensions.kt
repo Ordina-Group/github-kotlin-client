@@ -64,7 +64,7 @@ class PaginatedRequest<T : Any>(private val baseRequest: Request, private val le
     operator fun invoke(handler: HttpHandler): List<T> = getPage(handler)
 
     companion object {
-        inline operator fun <reified T : Any> invoke(uri: String) : PaginatedRequest<T> {
+        inline operator fun <reified T : Any> invoke(uri: String): PaginatedRequest<T> {
             val request = GetRequest(uri)
             val lens = getLens<List<T>>()
 

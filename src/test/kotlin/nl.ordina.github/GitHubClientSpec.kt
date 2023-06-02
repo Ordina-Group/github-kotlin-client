@@ -59,7 +59,7 @@ class GitHubClientSpec : WordSpec({
         "return an empty list when the organization has no repositories" {
             val client = GitHubClient(httpClient)
 
-            every { httpClient.invoke(matchUri("orgs/github/repos")) }
+            every { httpClient.invoke(matchUri("orgs/github/repos?page=1")) }
                 .returns(Response(Status.OK).body(Json.encodeToString(emptyList<GitHubRepository>())))
 
             val repositories = client.getRepositories("github")
@@ -70,7 +70,7 @@ class GitHubClientSpec : WordSpec({
         "return an empty list when the organization does not exist" {
             val client = GitHubClient(httpClient)
 
-            every { httpClient.invoke(matchUri("orgs/fake-org/repos")) }
+            every { httpClient.invoke(matchUri("orgs/fake-org/repos?page=1")) }
                 .returns(Response(Status.NOT_FOUND))
 
             val repositories = client.getRepositories("fake-org")

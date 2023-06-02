@@ -8,8 +8,8 @@ enum class Permission(val value: String) {
     Push("push"),
     Triage("triage"),
     Pull("pull")
-
 }
+
 @Serializable
 data class GitHubRepositoryPermissions internal constructor(
     val pull: Boolean? = null,
