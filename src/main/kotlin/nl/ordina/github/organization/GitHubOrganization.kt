@@ -15,6 +15,8 @@ data class GitHubOrganization internal constructor(
 ) {
     fun getTeams(): List<GitHubTeam> = GitHubOrganizationClient.getTeams(login)
 
+    fun getTeam(teamSlug: String): GitHubTeam? = GitHubOrganizationClient.getTeam(login, teamSlug)
+
     fun createTeam(
         teamName: String,
         teamDescription: String? = null,

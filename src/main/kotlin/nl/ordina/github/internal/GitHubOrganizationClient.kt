@@ -32,6 +32,18 @@ internal object GitHubOrganizationClient {
         return request(client).map { it.withOrganization(organizationName) }
     }
 
+    fun getTeam(organizationName: String, teamSlug: String): GitHubTeam? {
+        val lens = getLens<GetTeamResponse>()
+        val request = GetRequest("/orgs/$organizationName/teams/$teamSlug")
+        val response = client(request)
+
+        return when (response.status) {
+            Status.OK        -> lens(response).withOrganization(organizationName)
+            Status.NOT_FOUND -> null
+            else             -> null
+        }
+    }
+
     fun createTeam(
         organizationName: String,
         teamName: String,
