@@ -41,6 +41,16 @@ object PutRequest {
     }
 }
 
+object DeleteRequest {
+    inline operator fun <reified T : Any> invoke(uri: String, body: T? = null): Request {
+        return if (body != null) {
+            Request(Method.DELETE, uri).with(getLens<T>() of body)
+        } else {
+            Request(Method.DELETE, uri)
+        }
+    }
+}
+
 class PaginatedRequest<T : Any>(private val baseRequest: Request, private val lens: BiDiBodyLens<List<T>>) {
     private fun getPage(handler: HttpHandler, page: Int = 1): List<T> {
         val requestWithPage = baseRequest.query("page", page.toString())

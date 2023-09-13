@@ -18,6 +18,12 @@ internal object GitHubTeamClient {
         client(request)
     }
 
+    fun removeMember(organizationName: String, teamSlug: String, username: String) {
+        val request = DeleteRequest<Any>("/orgs/$organizationName/teams/$teamSlug/memberships/$username")
+
+        client(request)
+    }
+
     fun getRepositories(organizationName: String, teamSlug: String): List<GitHubTeamRepository> {
         val request = PaginatedRequest<GitHubTeamRepository>("/orgs/$organizationName/teams/$teamSlug/repos")
 
