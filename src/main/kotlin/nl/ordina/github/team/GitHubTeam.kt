@@ -4,6 +4,7 @@ import kotlinx.serialization.Serializable
 import nl.ordina.github.internal.GitHubTeamClient
 import nl.ordina.github.repository.GitHubRepositoryPermissions
 
+@Suppress("PropertyName")
 @Serializable
 data class GitHubTeam(
     private val organization: String,
