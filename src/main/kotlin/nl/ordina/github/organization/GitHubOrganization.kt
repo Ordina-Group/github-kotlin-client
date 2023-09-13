@@ -15,8 +15,13 @@ data class GitHubOrganization internal constructor(
 ) {
     fun getTeams(): List<GitHubTeam> = GitHubOrganizationClient.getTeams(login)
 
-    fun createTeam(teamName: String, teamDescription: String? = null): GitHubTeam =
-        GitHubOrganizationClient.createTeam(login, teamName, teamDescription)
+    fun createTeam(
+        teamName: String,
+        teamDescription: String? = null,
+        privacy: String = "secret",
+        parentTeamId: Int? = null
+    ): GitHubTeam =
+        GitHubOrganizationClient.createTeam(login, teamName, teamDescription, privacy, parentTeamId)
 
     fun getRepositories(): List<GitHubRepository> = GitHubOrganizationClient.getRepositories(login)
     fun getMembers(): List<GitHubOrganizationMember> = GitHubOrganizationClient.getMembers(login)

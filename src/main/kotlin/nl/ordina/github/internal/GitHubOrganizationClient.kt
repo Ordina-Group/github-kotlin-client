@@ -32,9 +32,16 @@ internal object GitHubOrganizationClient {
         return request(client).map { it.withOrganization(organizationName) }
     }
 
-    fun createTeam(organizationName: String, teamName: String, description: String?): GitHubTeam {
+    fun createTeam(
+        organizationName: String,
+        teamName: String,
+        description: String? = null,
+        privacy: String = "secret",
+        parentTeamId: Int? = null
+    ): GitHubTeam {
         val lens = Body.auto<GetTeamResponse>().toLens()
-        val request = PostRequest("orgs/$organizationName/teams", CreateTeamRequest(teamName, description))
+        val body = CreateTeamRequest(teamName, description, privacy, parentTeamId)
+        val request = PostRequest("orgs/$organizationName/teams", body)
 
         return lens(client(request)).withOrganization(organizationName)
     }
@@ -109,7 +116,9 @@ internal object GitHubOrganizationClient {
     @Serializable
     internal data class CreateTeamRequest(
         val name: String,
-        val description: String?
+        val description: String? = null,
+        val privacy: String = "secret",
+        val parent_team_id: Int? = null
     )
 
     @Serializable
