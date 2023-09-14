@@ -38,9 +38,9 @@ internal object GitHubOrganizationClient {
         val response = client(request)
 
         return when (response.status) {
-            Status.OK        -> lens(response).withOrganization(organizationName)
+            Status.OK -> lens(response).withOrganization(organizationName)
             Status.NOT_FOUND -> null
-            else             -> null
+            else -> null
         }
     }
 
