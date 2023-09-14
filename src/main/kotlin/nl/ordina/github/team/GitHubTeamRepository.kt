@@ -3,6 +3,7 @@ package nl.ordina.github.team
 import kotlinx.serialization.Serializable
 import nl.ordina.github.repository.*
 
+@Suppress("PropertyName")
 @Serializable
 data class GitHubTeamRepository(
     val id: Int,

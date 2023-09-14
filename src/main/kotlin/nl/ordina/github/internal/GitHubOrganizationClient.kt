@@ -1,3 +1,5 @@
+@file:Suppress("PropertyName")
+
 package nl.ordina.github.internal
 
 import kotlinx.serialization.Serializable
