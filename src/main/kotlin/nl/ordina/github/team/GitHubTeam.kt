@@ -29,6 +29,9 @@ data class GitHubTeam(
     fun addMember(username: String): Unit =
         GitHubTeamClient.addMember(organization, slug, username)
 
+    fun removeMember(username: String): Unit =
+        GitHubTeamClient.removeMember(organization, slug, username)
+
     fun getRepositories(): List<GitHubTeamRepository> =
         GitHubTeamClient.getRepositories(organization, slug)
 
