@@ -2,6 +2,7 @@ package nl.ordina.github.team
 
 import kotlinx.serialization.Serializable
 
+@Suppress("PropertyName")
 @Serializable
 data class GitHubTeamMember internal constructor(
     val name: String? = null,
