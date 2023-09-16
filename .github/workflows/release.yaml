@@ -30,8 +30,8 @@ jobs:
       - run: |
           git config user.name github-actions
           git config user.email github-actions@github.com
-          git commit -a -m "Releasing version $VERSION"
-          git push
+          git tag -a ${{ github.event.inputs.version }} -m "Releasing version $VERSION" ${{ github.sha }}
+          git push origin ${{ github.event.inputs.version }}
 
       - name: Build
         run: ./gradlew -Pversion=${{ github.event.inputs.version }} build
