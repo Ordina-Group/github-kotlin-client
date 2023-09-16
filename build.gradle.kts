@@ -2,12 +2,14 @@ plugins {
     kotlin("jvm") version "1.8.20"
     kotlin("plugin.serialization") version "1.8.20"
     id("org.jlleitschuh.gradle.ktlint") version "11.3.1"
+    id("org.jreleaser") version "1.7.0"
+    id("com.karmanno.plugins.semver") version "2.0.0"
+    `java-library`
     `maven-publish`
     jacoco
 }
 
 group = "nl.ordina"
-version = "0.0.2"
 
 val httpkVersion = "4.41.3.0"
 val kotestVersion = "5.6.1"
