@@ -26,12 +26,12 @@ jobs:
       - name: Setup Gradle
         uses: gradle/gradle-build-action@v2
 
-      - uses: actions/checkout@v4
-      - run: |
-          git config user.name github-actions
-          git config user.email github-actions@github.com
-          git tag -a ${{ github.event.inputs.version }} -m "Releasing version $VERSION" ${{ github.sha }}
-          git push origin ${{ github.event.inputs.version }}
+#      - uses: actions/checkout@v4
+#      - run: |
+#          git config user.name github-actions
+#          git config user.email github-actions@github.com
+#          git tag -a ${{ github.event.inputs.version }} -m "Releasing version $VERSION" ${{ github.sha }}
+#          git push origin ${{ github.event.inputs.version }}
 
       - name: Build
         run: ./gradlew -Pversion=${{ github.event.inputs.version }} build
