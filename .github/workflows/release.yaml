@@ -10,6 +10,9 @@ on:
 jobs:
   release:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -26,31 +29,19 @@ jobs:
       - name: Setup Gradle
         uses: gradle/gradle-build-action@v2
 
-#      - uses: actions/checkout@v4
-#      - run: |
-#          git config user.name github-actions
-#          git config user.email github-actions@github.com
-#          git tag -a ${{ github.event.inputs.version }} -m "Releasing version $VERSION" ${{ github.sha }}
-#          git push origin ${{ github.event.inputs.version }}
-
       - name: Build
         run: ./gradlew -Pversion=${{ github.event.inputs.version }} build
 
-      - name: Assemble
-        uses: jreleaser/release-action@v2
-        with:
-          arguments: assemble
+      - name: Publish
+        run: ./gradlew -Pversion=${{ github.event.inputs.version }} publish
         env:
-          JRELEASER_PROJECT_VERSION: ${{ github.event.inputs.version }}
-          JRELEASER_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_USERNAME: ${{ github.actor }}
 
       - name: Release
-        uses: jreleaser/release-action@v2
-        with:
-          arguments: full-release
+        run: ./gradlew -Pversion=${{ github.event.inputs.version }} jreleaserFullRelease
         env:
-          JRELEASER_PROJECT_VERSION: ${{ github.event.inputs.version }}
-          JRELEASER_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          JRELEASER_GITHUB_TOKEN: ${{ secrets.GH_PAT_TOKEN }}
 
       - name: JReleaser output
         if: always()
@@ -58,5 +49,5 @@ jobs:
         with:
           name: jreleaser-release
           path: |
-            out/jreleaser/trace.log
-            out/jreleaser/output.properties
+            build/jreleaser/trace.log
+            build/jreleaser/output.properties

@@ -1,3 +1,7 @@
+import org.jreleaser.model.Active
+import org.jreleaser.model.Distribution.DistributionType
+import java.nio.file.Paths
+
 plugins {
     kotlin("jvm") version "1.8.20"
     kotlin("plugin.serialization") version "1.8.20"
@@ -33,6 +37,45 @@ publishing {
             credentials {
                 username = project.findProperty("gpr.user") as String? ?: System.getenv("GITHUB_USERNAME")
                 password = project.findProperty("gpr.key") as String? ?: System.getenv("GITHUB_TOKEN")
+            }
+        }
+    }
+}
+
+jreleaser {
+    project {
+        description.set("A library for using the GitHub API from the JVM")
+        website.set("https://github.com/Ordina-Group/github-kotlin-client")
+        authors.add("Donovan de Kuiper")
+        license.set("APACHE-2.0")
+        copyright.set("Copyright © 2023 Ordina")
+    }
+
+    release {
+        github {
+            overwrite.set(true)
+
+            changelog {
+                formatted.set(Active.ALWAYS)
+                preset.set("conventional-commits")
+                contributors {
+                    format.set(
+                        "- {{contributorName}}{{#contributorUsernameAsLink}} ({{.}}){{/contributorUsernameAsLink}}"
+                    )
+                }
+            }
+
+            prerelease {
+                pattern.set(".*-RC\\d*")
+            }
+        }
+
+        distributions {
+            create("github-kotlin-client") {
+                distributionType.set(DistributionType.SINGLE_JAR)
+                artifact {
+                    path.set(Paths.get("build/libs/${project.name.get()}-${project.version.get()}.jar").toFile())
+                }
             }
         }
     }
