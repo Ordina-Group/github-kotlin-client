@@ -12,17 +12,26 @@ import org.http4k.core.Body
 import org.http4k.core.HttpHandler
 import org.http4k.core.Status
 import org.http4k.format.KotlinxSerialization.auto
+import org.slf4j.LoggerFactory
 
 internal class GitHubRepositoryClient(private val client: HttpHandler) {
+    private val logger = LoggerFactory.getLogger(GitHubRepositoryClient::class.java)
 
     fun getRepository(owner: String, repositoryName: String): GitHubRepository? {
+        logger.debug("Fetching repository '{}/{}'", owner, repositoryName)
         val lens = Body.auto<GetRepositoryResponse>().toLens()
         val request = GetRequest("repos/$owner/$repositoryName")
         val response = client(request)
 
         return when (response.status) {
-            Status.OK -> lens(response).withOwner(owner, this)
-            Status.NOT_FOUND -> null
+            Status.OK -> {
+                logger.debug("Found repository '{}/{}'", owner, repositoryName)
+                lens(response).withOwner(owner, this)
+            }
+            Status.NOT_FOUND -> {
+                logger.debug("Repository '{}/{}' not found", owner, repositoryName)
+                null
+            }
             else -> throw GitHubApiException.from(response, "getRepository($owner, $repositoryName)")
         }
     }

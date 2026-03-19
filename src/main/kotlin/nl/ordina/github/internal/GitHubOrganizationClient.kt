@@ -17,16 +17,26 @@ import org.http4k.core.Body
 import org.http4k.core.HttpHandler
 import org.http4k.core.Status
 import org.http4k.format.KotlinxSerialization.auto
+import org.slf4j.LoggerFactory
 
 internal class GitHubOrganizationClient(private val client: HttpHandler) {
+    private val logger = LoggerFactory.getLogger(GitHubOrganizationClient::class.java)
+
     fun getOrganization(organizationName: String): GitHubOrganization? {
+        logger.debug("Fetching organization '{}'", organizationName)
         val lens = Body.auto<GitHubOrganization>().toLens()
         val request = GetRequest("orgs/$organizationName")
         val response = client(request)
 
         return when (response.status) {
-            Status.OK -> lens(response).also { it.organizationClient = this }
-            Status.NOT_FOUND -> null
+            Status.OK -> {
+                logger.debug("Found organization '{}'", organizationName)
+                lens(response).also { it.organizationClient = this }
+            }
+            Status.NOT_FOUND -> {
+                logger.debug("Organization '{}' not found", organizationName)
+                null
+            }
             else -> throw GitHubApiException.from(response, "getOrganization($organizationName)")
         }
     }

@@ -10,6 +10,7 @@ import org.http4k.core.with
 import org.http4k.format.KotlinxSerialization.auto
 import org.http4k.lens.BiDiBodyLens
 import org.http4k.lens.Header
+import org.slf4j.LoggerFactory
 
 object GetRequest {
     operator fun invoke(uri: String): Request = Request(Method.GET, uri)
@@ -58,17 +59,22 @@ object DeleteRequest {
 }
 
 private const val PAGE_SIZE = 100
+private val logger = LoggerFactory.getLogger(PaginatedRequest::class.java)
 
 class PaginatedRequest<T : Any>(private val baseRequest: Request, private val lens: BiDiBodyLens<List<T>>) {
     private fun getPage(handler: HttpHandler, page: Int = 1): List<T> {
         val requestWithPage = baseRequest
             .query("page", page.toString())
             .query("per_page", PAGE_SIZE.toString())
+
+        logger.debug("Fetching page {} of {}", page, baseRequest.uri)
+
         val response = handler(requestWithPage)
 
         return when (response.status) {
             Status.OK -> {
                 val hasNext = Header.LINK(response).containsKey("next")
+                logger.debug("Page {} of {} returned {} items, hasNext={}", page, baseRequest.uri, response.bodyString().length, hasNext)
 
                 if (hasNext) {
                     lens(response) + getPage(handler, page + 1)

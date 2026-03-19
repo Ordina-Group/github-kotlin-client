@@ -4,9 +4,13 @@ import kotlinx.serialization.Serializable
 import nl.ordina.github.team.GitHubTeamMember
 import nl.ordina.github.team.GitHubTeamRepository
 import org.http4k.core.HttpHandler
+import org.slf4j.LoggerFactory
 
 internal class GitHubTeamClient(private val client: HttpHandler) {
+    private val logger = LoggerFactory.getLogger(GitHubTeamClient::class.java)
+
     fun getMembers(organizationName: String, teamSlug: String): List<GitHubTeamMember> {
+        logger.debug("Fetching members of team '{}/{}' ", organizationName, teamSlug)
         val request = PaginatedRequest<GitHubTeamMember>("orgs/$organizationName/teams/$teamSlug/members")
 
         return request(client)
