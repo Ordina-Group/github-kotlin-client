@@ -6,6 +6,7 @@ import nl.ordina.github.internal.GitHubRepositoryClient
 import nl.ordina.github.internal.GitHubRepositoryClient.Affiliation
 
 @Serializable
+@ConsistentCopyVisibility
 data class GitHubRepository internal constructor(
     private val owner: String,
     val id: Int,

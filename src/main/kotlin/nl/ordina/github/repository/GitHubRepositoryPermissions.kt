@@ -11,6 +11,7 @@ enum class Permission(val value: String) {
 }
 
 @Serializable
+@ConsistentCopyVisibility
 data class GitHubRepositoryPermissions internal constructor(
     val pull: Boolean? = null,
     val triage: Boolean? = null,

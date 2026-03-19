@@ -4,7 +4,7 @@ import nl.ordina.github.internal.GitHubOrganizationClient
 import nl.ordina.github.internal.GitHubRepositoryClient
 import nl.ordina.github.organization.GitHubOrganization
 import nl.ordina.github.repository.GitHubRepository
-import org.http4k.client.JavaHttpClient
+import org.http4k.client.ApacheClient
 import org.http4k.core.HttpHandler
 import org.http4k.core.Uri
 import org.http4k.core.then
@@ -42,8 +42,8 @@ class GitHubClient internal constructor(private val httpClient: HttpHandler) {
         fun create(token: String, baseUrl: String = "https://api.github.com"): GitHubClient {
             val httpClient: HttpHandler = ClientFilters
                 .SetBaseUriFrom(Uri.of(baseUrl))
-                .then(ClientFilters.BearerAuth.invoke(token))
-                .then(JavaHttpClient())
+                .then(ClientFilters.BearerAuth(token))
+                .then(ApacheClient())
 
             return GitHubClient(httpClient)
         }

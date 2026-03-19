@@ -3,6 +3,7 @@ package nl.ordina.github.repository
 import kotlinx.serialization.Serializable
 
 @Serializable
+@ConsistentCopyVisibility
 data class GitHubRepositoryCollaborator internal constructor(
     val login: String,
     val id: Int,

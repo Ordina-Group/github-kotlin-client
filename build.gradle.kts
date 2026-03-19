@@ -3,12 +3,12 @@ import org.jreleaser.model.Distribution.DistributionType
 import java.nio.file.Paths
 
 plugins {
-    kotlin("jvm") version "1.8.20"
-    kotlin("plugin.serialization") version "1.8.20"
-    id("org.jlleitschuh.gradle.ktlint") version "11.3.1"
+    kotlin("jvm") version "2.2.0"
+    kotlin("plugin.serialization") version "2.2.0"
+    id("org.jlleitschuh.gradle.ktlint") version "14.2.0"
     id("org.jreleaser") version "1.7.0"
     id("com.karmanno.plugins.semver") version "2.0.0"
-    id("org.jetbrains.dokka") version "1.9.0"
+    id("org.jetbrains.dokka") version "2.0.0"
     `java-library`
     `maven-publish`
     jacoco
@@ -16,12 +16,12 @@ plugins {
 
 group = "nl.ordina"
 
-val httpkVersion = "4.41.3.0"
-val kotestVersion = "5.6.1"
-val mockkVersion = "1.13.5"
+val http4kVersion = "6.15.1.0"
+val kotestVersion = "5.9.1"
+val mockkVersion = "1.14.3"
 
 kotlin {
-    jvmToolchain(17)
+    jvmToolchain(21)
 }
 
 publishing {
@@ -46,7 +46,7 @@ publishing {
 jreleaser {
     project {
         description.set("A library for using the GitHub API from the JVM")
-        website.set("https://github.com/Ordina-Group/github-kotlin-client")
+        links.homepage.set("https://github.com/Ordina-Group/github-kotlin-client")
         authors.add("Donovan de Kuiper")
         license.set("APACHE-2.0")
         copyright.set("Copyright © 2023 Ordina")
@@ -95,8 +95,9 @@ tasks.withType<Test>().configureEach {
 }
 
 dependencies {
-    implementation("org.http4k:http4k-core:$httpkVersion")
-    implementation("org.http4k:http4k-format-kotlinx-serialization:$httpkVersion")
+    implementation("org.http4k:http4k-core:$http4kVersion")
+    implementation("org.http4k:http4k-client-apache:$http4kVersion")
+    implementation("org.http4k:http4k-format-kotlinx-serialization:$http4kVersion")
     testImplementation("io.kotest:kotest-runner-junit5-jvm:$kotestVersion")
     testImplementation("io.kotest:kotest-assertions-core:$kotestVersion")
     testImplementation("io.mockk:mockk:$mockkVersion")

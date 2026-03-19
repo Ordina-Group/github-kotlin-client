@@ -9,6 +9,7 @@ import nl.ordina.github.repository.GitHubRepository
 import nl.ordina.github.team.GitHubTeam
 
 @Serializable
+@ConsistentCopyVisibility
 data class GitHubOrganization internal constructor(
     val login: String,
     val id: Int,

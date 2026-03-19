@@ -4,6 +4,7 @@ import kotlinx.serialization.Serializable
 
 @Suppress("PropertyName")
 @Serializable
+@ConsistentCopyVisibility
 data class GitHubTeamMember internal constructor(
     val name: String? = null,
     val email: String? = null,
