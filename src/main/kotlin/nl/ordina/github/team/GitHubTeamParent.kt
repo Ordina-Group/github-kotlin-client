@@ -1,21 +1,21 @@
 package nl.ordina.github.team
 
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
-@Suppress("PropertyName")
 @Serializable
 data class GitHubTeamParent(
     val id: Int,
-    val node_id: String,
+    @SerialName("node_id") val nodeId: String,
     val url: String,
-    val members_url: String,
+    @SerialName("members_url") val membersUrl: String,
     val name: String,
     val description: String? = null,
     val permission: String,
     val privacy: String? = null,
-    val notification_setting: String? = null,
-    val html_url: String,
-    val repositories_url: String,
+    @SerialName("notification_setting") val notificationSetting: String? = null,
+    @SerialName("html_url") val htmlUrl: String,
+    @SerialName("repositories_url") val repositoriesUrl: String,
     val slug: String,
-    val ldap_dn: String? = null
+    @SerialName("ldap_dn") val ldapDn: String? = null
 )

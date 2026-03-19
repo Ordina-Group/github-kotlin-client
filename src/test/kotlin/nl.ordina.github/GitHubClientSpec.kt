@@ -51,14 +51,14 @@ class GitHubClientSpec : WordSpec({
         }
 
         "return an empty list when the organization has no repositories" {
-            every { httpClient.invoke(matchUri("orgs/github/repos?page=1")) }
+            every { httpClient.invoke(matchUri("orgs/github/repos?page=1&per_page=100")) }
                 .returns(Response(Status.OK).body(Json.encodeToString(emptyList<GitHubRepository>())))
 
             client.getRepositories("github").shouldBeEmpty()
         }
 
         "return an empty list when the organization does not exist" {
-            every { httpClient.invoke(matchUri("orgs/fake-org/repos?page=1")) }
+            every { httpClient.invoke(matchUri("orgs/fake-org/repos?page=1&per_page=100")) }
                 .returns(Response(Status.NOT_FOUND))
 
             client.getRepositories("fake-org").shouldBeEmpty()

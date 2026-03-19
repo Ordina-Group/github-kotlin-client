@@ -12,7 +12,7 @@ object Defaults {
     fun organization(httpClient: HttpHandler) = GitHubOrganization(
         login = owner,
         id = 1,
-        node_id = "MDEyOk9yZ2FuaXphdGlvbjE=",
+        nodeId = "MDEyOk9yZ2FuaXphdGlvbjE=",
         name = "github",
         company = "GitHub"
     ).also { it.organizationClient = GitHubOrganizationClient(httpClient) }
@@ -21,6 +21,6 @@ object Defaults {
         owner = owner,
         id = 1,
         name = "Mona-Liza",
-        full_name = "github/Mona-Liza"
+        fullName = "github/Mona-Liza"
     ).also { it.repositoryClient = GitHubRepositoryClient(httpClient) }
 }

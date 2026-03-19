@@ -19,7 +19,7 @@ class GitHubOrganizationSpec : WordSpec({
             val httpClient = mockk<HttpHandler>()
             val organization = Defaults.organization(httpClient)
 
-            every { httpClient.invoke(matchUri("orgs/${organization.login}/repos?page=1")) }
+            every { httpClient.invoke(matchUri("orgs/${organization.login}/repos?page=1&per_page=100")) }
                 .returns(Response(Status.OK).body("[]"))
 
             organization.getRepositories().shouldBeEmpty()
@@ -30,7 +30,7 @@ class GitHubOrganizationSpec : WordSpec({
             val organization = Defaults.organization(httpClient)
             val repository = Defaults.repository(httpClient)
 
-            every { httpClient.invoke(matchUri("orgs/${organization.login}/repos?page=1")) }
+            every { httpClient.invoke(matchUri("orgs/${organization.login}/repos?page=1&per_page=100")) }
                 .returns(Response(Status.OK).body(Json.encodeToString(listOf(repository))))
 
             organization.getRepositories() shouldHaveSize 1

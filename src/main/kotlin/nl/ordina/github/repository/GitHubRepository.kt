@@ -1,5 +1,6 @@
 package nl.ordina.github.repository
 
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 import nl.ordina.github.internal.GitHubRepositoryClient
@@ -11,7 +12,7 @@ data class GitHubRepository internal constructor(
     private val owner: String,
     val id: Int,
     val name: String,
-    val full_name: String
+    @SerialName("full_name") val fullName: String
 ) {
     @Transient
     internal var repositoryClient: GitHubRepositoryClient? = null

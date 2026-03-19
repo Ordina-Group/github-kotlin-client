@@ -2,6 +2,7 @@
 
 package nl.ordina.github.organization
 
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 import nl.ordina.github.internal.GitHubOrganizationClient
@@ -13,7 +14,7 @@ import nl.ordina.github.team.GitHubTeam
 data class GitHubOrganization internal constructor(
     val login: String,
     val id: Int,
-    val node_id: String,
+    @SerialName("node_id") val nodeId: String,
     val name: String? = null,
     val company: String? = null
 ) {

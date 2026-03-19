@@ -2,6 +2,7 @@
 
 package nl.ordina.github.internal
 
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import nl.ordina.github.repository.GitHubRepository
 import nl.ordina.github.repository.GitHubRepositoryCollaborator
@@ -65,47 +66,51 @@ internal class GitHubRepositoryClient(private val client: HttpHandler) {
     }
 
     @Serializable
-    data class TransferRepositoryRequest(val new_owner: String, val team_ids: List<Int>, val new_name: String?)
+    data class TransferRepositoryRequest(
+        @SerialName("new_owner") val newOwner: String,
+        @SerialName("team_ids") val teamIds: List<Int>,
+        @SerialName("new_name") val newName: String?
+    )
 
     @Serializable
-    data class GetRepositoryResponse(val id: Int, val name: String, val full_name: String) {
+    data class GetRepositoryResponse(val id: Int, val name: String, @SerialName("full_name") val fullName: String) {
         fun withOwner(owner: String, repositoryClient: GitHubRepositoryClient) = GitHubRepository(
             owner = owner,
-            id,
-            name,
-            full_name
+            id = id,
+            name = name,
+            fullName = fullName
         ).also { it.repositoryClient = repositoryClient }
     }
 
     @Serializable
     data class GetTeamResponse(
         val id: Int,
-        val node_id: String,
+        @SerialName("node_id") val nodeId: String,
         val url: String,
-        val html_url: String,
+        @SerialName("html_url") val htmlUrl: String,
         val name: String,
         val slug: String,
         val description: String,
         val privacy: String,
-        val notification_setting: String,
+        @SerialName("notification_setting") val notificationSetting: String,
         val permission: String,
-        val members_url: String,
-        val repositories_url: String
+        @SerialName("members_url") val membersUrl: String,
+        @SerialName("repositories_url") val repositoriesUrl: String
     ) {
         fun withOrganization(organization: String, teamClient: GitHubTeamClient) = GitHubRepositoryTeam(
             organization = organization,
-            id,
-            node_id,
-            url,
-            html_url,
-            name,
-            slug,
-            description,
-            privacy,
-            notification_setting,
-            permission,
-            members_url,
-            repositories_url
+            id = id,
+            nodeId = nodeId,
+            url = url,
+            htmlUrl = htmlUrl,
+            name = name,
+            slug = slug,
+            description = description,
+            privacy = privacy,
+            notificationSetting = notificationSetting,
+            permission = permission,
+            membersUrl = membersUrl,
+            repositoriesUrl = repositoriesUrl
         ).also { it.teamClient = teamClient }
     }
 

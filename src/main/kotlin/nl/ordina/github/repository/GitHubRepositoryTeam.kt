@@ -1,5 +1,6 @@
 package nl.ordina.github.repository
 
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 import nl.ordina.github.internal.GitHubTeamClient
@@ -10,17 +11,17 @@ import nl.ordina.github.team.GitHubTeamRepository
 data class GitHubRepositoryTeam(
     private val organization: String,
     val id: Int,
-    val node_id: String,
+    @SerialName("node_id") val nodeId: String,
     val url: String,
-    val html_url: String,
+    @SerialName("html_url") val htmlUrl: String,
     val name: String,
     val slug: String,
     val description: String,
     val privacy: String,
-    val notification_setting: String,
+    @SerialName("notification_setting") val notificationSetting: String,
     val permission: String,
-    val members_url: String,
-    val repositories_url: String,
+    @SerialName("members_url") val membersUrl: String,
+    @SerialName("repositories_url") val repositoriesUrl: String,
     val parent: GitHubRepositoryTeam? = null
 ) {
     @Transient

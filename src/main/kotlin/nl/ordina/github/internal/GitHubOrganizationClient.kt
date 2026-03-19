@@ -2,6 +2,7 @@
 
 package nl.ordina.github.internal
 
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import nl.ordina.github.organization.GitHubOrganization
 import nl.ordina.github.organization.GitHubOrganizationInvite
@@ -62,7 +63,7 @@ internal class GitHubOrganizationClient(private val client: HttpHandler) {
 
     fun getRepositories(organizationName: String): List<GitHubRepository> {
         val repositoryClient = GitHubRepositoryClient(client)
-        val request = PaginatedRequest<GetRepositoryResponse>("orgs/$organizationName/repos")
+        val request = PaginatedRequest<GitHubRepositoryClient.GetRepositoryResponse>("orgs/$organizationName/repos")
 
         return request(client).map { it.withOwner(organizationName, repositoryClient) }
     }
@@ -88,43 +89,43 @@ internal class GitHubOrganizationClient(private val client: HttpHandler) {
 
     @Serializable
     internal data class InviteRequest(
-        val invitee_id: Int
+        @SerialName("invitee_id") val inviteeId: Int
     )
 
     @Serializable
     internal data class GetTeamResponse(
         val id: Int,
-        val node_id: String,
+        @SerialName("node_id") val nodeId: String,
         val name: String,
         val slug: String,
         val description: String? = null,
         val privacy: String? = null,
-        val notification_setting: String? = null,
+        @SerialName("notification_setting") val notificationSetting: String? = null,
         val permission: String,
         val permissions: GitHubRepositoryPermissions? = null,
         val url: String,
-        val html_url: String,
-        val members_url: String,
-        val repositories_url: String,
+        @SerialName("html_url") val htmlUrl: String,
+        @SerialName("members_url") val membersUrl: String,
+        @SerialName("repositories_url") val repositoriesUrl: String,
         val parent: GitHubTeamParent? = null
     ) {
         fun withOrganization(organizationName: String): GitHubTeam =
             GitHubTeam(
                 organization = organizationName,
-                id,
-                node_id,
-                name,
-                slug,
-                description,
-                privacy,
-                notification_setting,
-                permission,
-                permissions,
-                url,
-                html_url,
-                members_url,
-                repositories_url,
-                parent
+                id = id,
+                nodeId = nodeId,
+                name = name,
+                slug = slug,
+                description = description,
+                privacy = privacy,
+                notificationSetting = notificationSetting,
+                permission = permission,
+                permissions = permissions,
+                url = url,
+                htmlUrl = htmlUrl,
+                membersUrl = membersUrl,
+                repositoriesUrl = repositoriesUrl,
+                parent = parent
             )
     }
 
@@ -133,21 +134,6 @@ internal class GitHubOrganizationClient(private val client: HttpHandler) {
         val name: String,
         val description: String? = null,
         val privacy: String = "secret",
-        val parent_team_id: Int? = null
+        @SerialName("parent_team_id") val parentTeamId: Int? = null
     )
-
-    @Serializable
-    internal data class GetRepositoryResponse(
-        val id: Int,
-        val name: String,
-        val full_name: String
-    ) {
-        fun withOwner(owner: String, repositoryClient: GitHubRepositoryClient): GitHubRepository =
-            GitHubRepository(
-                owner = owner,
-                id,
-                name,
-                full_name
-            ).also { it.repositoryClient = repositoryClient }
-    }
 }

@@ -1,5 +1,6 @@
 package nl.ordina.github.repository
 
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -7,22 +8,22 @@ import kotlinx.serialization.Serializable
 data class GitHubRepositoryCollaborator internal constructor(
     val login: String,
     val id: Int,
-    val node_id: String,
-    val avatar_url: String,
-    val gravatar_id: String,
+    @SerialName("node_id") val nodeId: String,
+    @SerialName("avatar_url") val avatarUrl: String,
+    @SerialName("gravatar_id") val gravatarId: String,
     val url: String,
-    val html_url: String,
-    val followers_url: String,
-    val following_url: String,
-    val gists_url: String,
-    val starred_url: String,
-    val subscriptions_url: String,
-    val organizations_url: String,
-    val repos_url: String,
-    val events_url: String,
-    val received_events_url: String,
+    @SerialName("html_url") val htmlUrl: String,
+    @SerialName("followers_url") val followersUrl: String,
+    @SerialName("following_url") val followingUrl: String,
+    @SerialName("gists_url") val gistsUrl: String,
+    @SerialName("starred_url") val starredUrl: String,
+    @SerialName("subscriptions_url") val subscriptionsUrl: String,
+    @SerialName("organizations_url") val organizationsUrl: String,
+    @SerialName("repos_url") val reposUrl: String,
+    @SerialName("events_url") val eventsUrl: String,
+    @SerialName("received_events_url") val receivedEventsUrl: String,
     val type: String,
-    val site_admin: Boolean,
+    @SerialName("site_admin") val siteAdmin: Boolean,
     val permissions: GitHubRepositoryPermissions,
-    val role_name: String
+    @SerialName("role_name") val roleName: String
 )

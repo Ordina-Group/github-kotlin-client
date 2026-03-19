@@ -40,6 +40,12 @@ object PutRequest {
         }
     }
 }
+
+object PatchRequest {
+    inline operator fun <reified T : Any> invoke(uri: String, body: T): Request =
+        Request(Method.PATCH, uri).with(getLens<T>() of body)
+}
+
 object DeleteRequest {
     inline operator fun <reified T : Any> invoke(uri: String, body: T? = null): Request {
         return if (body != null) {
@@ -50,9 +56,13 @@ object DeleteRequest {
     }
 }
 
+private const val PAGE_SIZE = 100
+
 class PaginatedRequest<T : Any>(private val baseRequest: Request, private val lens: BiDiBodyLens<List<T>>) {
     private fun getPage(handler: HttpHandler, page: Int = 1): List<T> {
-        val requestWithPage = baseRequest.query("page", page.toString())
+        val requestWithPage = baseRequest
+            .query("page", page.toString())
+            .query("per_page", PAGE_SIZE.toString())
         val response = handler(requestWithPage)
 
         return when (response.status) {
@@ -82,4 +92,4 @@ class PaginatedRequest<T : Any>(private val baseRequest: Request, private val le
     }
 }
 
-inline fun <reified T : Any>getLens(): BiDiBodyLens<T> = Body.auto<T>().toLens()
+inline fun <reified T : Any> getLens(): BiDiBodyLens<T> = Body.auto<T>().toLens()

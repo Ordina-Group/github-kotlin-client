@@ -1,5 +1,6 @@
 package nl.ordina.github.organization
 
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -8,12 +9,12 @@ data class GitHubOrganizationInvite(
     val login: String?,
     val email: String?,
     val role: String,
-    val created_at: String,
-    val failed_at: String? = null,
-    val failed_reason: String? = null,
+    @SerialName("created_at") val createdAt: String,
+    @SerialName("failed_at") val failedAt: String? = null,
+    @SerialName("failed_reason") val failedReason: String? = null,
     val inviter: GitHubOrganizationInviter,
-    val team_count: Int,
-    val node_id: String,
-    val invitation_teams_url: String,
-    val invitation_source: String? = null
+    @SerialName("team_count") val teamCount: Int,
+    @SerialName("node_id") val nodeId: String,
+    @SerialName("invitation_teams_url") val invitationTeamsUrl: String,
+    @SerialName("invitation_source") val invitationSource: String? = null
 )
