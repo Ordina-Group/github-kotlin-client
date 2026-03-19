@@ -1,6 +1,9 @@
+@file:Suppress("PropertyName")
+
 package nl.ordina.github.organization
 
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 import nl.ordina.github.internal.GitHubOrganizationClient
 import nl.ordina.github.repository.GitHubRepository
 import nl.ordina.github.team.GitHubTeam
@@ -10,12 +13,15 @@ data class GitHubOrganization internal constructor(
     val login: String,
     val id: Int,
     val node_id: String,
-    val name: String,
+    val name: String? = null,
     val company: String? = null
 ) {
-    fun getTeams(): List<GitHubTeam> = GitHubOrganizationClient.getTeams(login)
+    @Transient
+    internal var organizationClient: GitHubOrganizationClient? = null
 
-    fun getTeam(teamSlug: String): GitHubTeam? = GitHubOrganizationClient.getTeam(login, teamSlug)
+    fun getTeams(): List<GitHubTeam> = requireClient().getTeams(login)
+
+    fun getTeam(teamSlug: String): GitHubTeam? = requireClient().getTeam(login, teamSlug)
 
     fun createTeam(
         teamName: String,
@@ -23,10 +29,13 @@ data class GitHubOrganization internal constructor(
         privacy: String = "secret",
         parentTeamId: Int? = null
     ): GitHubTeam =
-        GitHubOrganizationClient.createTeam(login, teamName, teamDescription, privacy, parentTeamId)
+        requireClient().createTeam(login, teamName, teamDescription, privacy, parentTeamId)
 
-    fun getRepositories(): List<GitHubRepository> = GitHubOrganizationClient.getRepositories(login)
-    fun getMembers(): List<GitHubOrganizationMember> = GitHubOrganizationClient.getMembers(login)
+    fun getRepositories(): List<GitHubRepository> = requireClient().getRepositories(login)
+    fun getMembers(): List<GitHubOrganizationMember> = requireClient().getMembers(login)
 
-    fun invite(inviteeId: Int): GitHubOrganizationInvite? = GitHubOrganizationClient.invite(login, inviteeId)
+    fun invite(inviteeId: Int): GitHubOrganizationInvite? = requireClient().invite(login, inviteeId)
+
+    private fun requireClient(): GitHubOrganizationClient =
+        requireNotNull(organizationClient) { "No HTTP client configured on GitHubOrganization" }
 }

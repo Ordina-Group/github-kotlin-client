@@ -3,15 +3,15 @@
 package nl.ordina.github.internal
 
 import kotlinx.serialization.Serializable
-import nl.ordina.github.client
 import nl.ordina.github.repository.GitHubRepository
 import nl.ordina.github.repository.GitHubRepositoryCollaborator
 import nl.ordina.github.repository.GitHubRepositoryTeam
 import org.http4k.core.Body
+import org.http4k.core.HttpHandler
 import org.http4k.core.Status
 import org.http4k.format.KotlinxSerialization.auto
 
-internal object GitHubRepositoryClient {
+internal class GitHubRepositoryClient(private val client: HttpHandler) {
 
     fun getRepository(owner: String, repositoryName: String): GitHubRepository? {
         val lens = Body.auto<GetRepositoryResponse>().toLens()
@@ -19,7 +19,7 @@ internal object GitHubRepositoryClient {
         val response = client(request)
 
         return when (response.status) {
-            Status.OK -> lens(response).withOwner(owner)
+            Status.OK -> lens(response).withOwner(owner, this)
             Status.NOT_FOUND -> null
             // TODO Deal with unexpected responses
             else -> null
@@ -30,9 +30,10 @@ internal object GitHubRepositoryClient {
         val lens = Body.auto<List<GetTeamResponse>>().toLens()
         val request = GetRequest("/repos/$owner/$repositoryName/teams")
         val response = client(request)
+        val teamClient = GitHubTeamClient(client)
 
         return when (response.status) {
-            Status.OK -> lens(response).map { it.withOrganization(owner) }
+            Status.OK -> lens(response).map { it.withOrganization(owner, teamClient) }
             else -> emptyList()
         }
     }
@@ -68,12 +69,12 @@ internal object GitHubRepositoryClient {
 
     @Serializable
     data class GetRepositoryResponse(val id: Int, val name: String, val full_name: String) {
-        fun withOwner(owner: String) = GitHubRepository(
+        fun withOwner(owner: String, repositoryClient: GitHubRepositoryClient) = GitHubRepository(
             owner = owner,
             id,
             name,
             full_name
-        )
+        ).also { it.repositoryClient = repositoryClient }
     }
 
     @Serializable
@@ -91,7 +92,7 @@ internal object GitHubRepositoryClient {
         val members_url: String,
         val repositories_url: String
     ) {
-        fun withOrganization(organization: String) = GitHubRepositoryTeam(
+        fun withOrganization(organization: String, teamClient: GitHubTeamClient) = GitHubRepositoryTeam(
             organization = organization,
             id,
             node_id,
@@ -105,7 +106,7 @@ internal object GitHubRepositoryClient {
             permission,
             members_url,
             repositories_url
-        )
+        ).also { it.teamClient = teamClient }
     }
 
     enum class Affiliation(val value: String) {

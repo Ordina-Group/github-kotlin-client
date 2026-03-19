@@ -40,7 +40,6 @@ object PutRequest {
         }
     }
 }
-
 object DeleteRequest {
     inline operator fun <reified T : Any> invoke(uri: String, body: T? = null): Request {
         return if (body != null) {

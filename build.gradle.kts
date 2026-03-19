@@ -8,6 +8,7 @@ plugins {
     id("org.jlleitschuh.gradle.ktlint") version "11.3.1"
     id("org.jreleaser") version "1.7.0"
     id("com.karmanno.plugins.semver") version "2.0.0"
+    id("org.jetbrains.dokka") version "1.9.0"
     `java-library`
     `maven-publish`
     jacoco

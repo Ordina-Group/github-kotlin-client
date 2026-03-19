@@ -1,11 +1,11 @@
 package nl.ordina.github.internal
 
 import kotlinx.serialization.Serializable
-import nl.ordina.github.client
 import nl.ordina.github.team.GitHubTeamMember
 import nl.ordina.github.team.GitHubTeamRepository
+import org.http4k.core.HttpHandler
 
-internal object GitHubTeamClient {
+internal class GitHubTeamClient(private val client: HttpHandler) {
     fun getMembers(organizationName: String, teamSlug: String): List<GitHubTeamMember> {
         val request = PaginatedRequest<GitHubTeamMember>("orgs/$organizationName/teams/$teamSlug/members")
 

@@ -13,29 +13,27 @@ import org.http4k.core.Status
 
 class GitHubOrganizationSpec : WordSpec({
 
-    "A GitHub organization" should {
-        val httpClient = mockk<HttpHandler>()
+    "A GitHub organization listing its repositories" When {
 
-        "be able to list repositories belonging to the organization when the organization has no repositories" {
-            GitHubClient(httpClient)
+        "the organization has no repositories" should {
+            val httpClient = mockk<HttpHandler>()
+            val organization = Defaults.organization(httpClient)
 
-            every { httpClient.invoke(matchUri("orgs/${Defaults.organization.login}/repos?page=1")) }
+            every { httpClient.invoke(matchUri("orgs/${organization.login}/repos?page=1")) }
                 .returns(Response(Status.OK).body("[]"))
 
-            val repositories = Defaults.organization.getRepositories()
-
-            repositories.shouldBeEmpty()
+            organization.getRepositories().shouldBeEmpty()
         }
 
-        "be able to list repositories belonging to the organization when the organization has repositories" {
-            GitHubClient(httpClient)
+        "the organization has repositories" should {
+            val httpClient = mockk<HttpHandler>()
+            val organization = Defaults.organization(httpClient)
+            val repository = Defaults.repository(httpClient)
 
-            every { httpClient.invoke(matchUri("orgs/${Defaults.organization.login}/repos?page=1")) }
-                .returns(Response(Status.OK).body(Json.encodeToString(listOf(Defaults.repository))))
+            every { httpClient.invoke(matchUri("orgs/${organization.login}/repos?page=1")) }
+                .returns(Response(Status.OK).body(Json.encodeToString(listOf(repository))))
 
-            val repositories = Defaults.organization.getRepositories()
-
-            repositories shouldHaveSize 1
+            organization.getRepositories() shouldHaveSize 1
         }
     }
 })

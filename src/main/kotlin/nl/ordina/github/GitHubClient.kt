@@ -5,33 +5,47 @@ import nl.ordina.github.internal.GitHubRepositoryClient
 import nl.ordina.github.organization.GitHubOrganization
 import nl.ordina.github.repository.GitHubRepository
 import org.http4k.client.JavaHttpClient
-import org.http4k.core.*
+import org.http4k.core.HttpHandler
+import org.http4k.core.Uri
+import org.http4k.core.then
 import org.http4k.filter.ClientFilters
 
-lateinit var client: HttpHandler
+class GitHubClient internal constructor(private val httpClient: HttpHandler) {
+    private val organizationClient = GitHubOrganizationClient(httpClient)
+    private val repositoryClient = GitHubRepositoryClient(httpClient)
 
-class GitHubClient internal constructor(_client: HttpHandler) {
-    init {
-        client = _client
-    }
-
+    /**
+     * Get an organization by its name
+     */
     fun getOrganization(name: String): GitHubOrganization? =
-        GitHubOrganizationClient.getOrganization(name)
+        organizationClient.getOrganization(name)
 
+    /**
+     * Get a repository by its owner and name
+     */
     fun getRepository(owner: String, repositoryName: String): GitHubRepository? =
-        GitHubRepositoryClient.getRepository(owner, repositoryName)
+        repositoryClient.getRepository(owner, repositoryName)
 
+    /**
+     * Get a list of repositories from an organization
+     */
     fun getRepositories(organizationName: String): List<GitHubRepository> =
-        GitHubOrganizationClient.getRepositories(organizationName)
+        organizationClient.getRepositories(organizationName)
 
     companion object {
+        /**
+         * Creates a client used for communication with the GitHub API
+         *
+         * @param token The GitHub token used for communication with the GitHub API
+         * @param baseUrl The base url of the GitHub API, defaults to the Cloud GitHub API
+         */
         fun create(token: String, baseUrl: String = "https://api.github.com"): GitHubClient {
-            val client: HttpHandler = ClientFilters
+            val httpClient: HttpHandler = ClientFilters
                 .SetBaseUriFrom(Uri.of(baseUrl))
                 .then(ClientFilters.BearerAuth.invoke(token))
                 .then(JavaHttpClient())
 
-            return GitHubClient(client)
+            return GitHubClient(httpClient)
         }
     }
 }

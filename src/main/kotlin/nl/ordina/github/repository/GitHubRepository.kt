@@ -1,6 +1,7 @@
 package nl.ordina.github.repository
 
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 import nl.ordina.github.internal.GitHubRepositoryClient
 import nl.ordina.github.internal.GitHubRepositoryClient.Affiliation
 
@@ -11,10 +12,15 @@ data class GitHubRepository internal constructor(
     val name: String,
     val full_name: String
 ) {
+    @Transient
+    internal var repositoryClient: GitHubRepositoryClient? = null
 
-    fun getTeams() = GitHubRepositoryClient.getTeams(owner, name)
-    fun getAllCollaborators() = GitHubRepositoryClient.getCollaborators(owner, name, Affiliation.ALL)
-    fun getDirectCollaborators() = GitHubRepositoryClient.getCollaborators(owner, name, Affiliation.DIRECT)
-    fun getOutsideCollaborators() = GitHubRepositoryClient.getCollaborators(owner, name, Affiliation.OUTSIDE)
-    fun transfer(newOwner: String) = GitHubRepositoryClient.transfer(owner, name, newOwner)
+    fun getTeams() = requireClient().getTeams(owner, name)
+    fun getAllCollaborators() = requireClient().getCollaborators(owner, name, Affiliation.ALL)
+    fun getDirectCollaborators() = requireClient().getCollaborators(owner, name, Affiliation.DIRECT)
+    fun getOutsideCollaborators() = requireClient().getCollaborators(owner, name, Affiliation.OUTSIDE)
+    fun transfer(newOwner: String) = requireClient().transfer(owner, name, newOwner)
+
+    private fun requireClient(): GitHubRepositoryClient =
+        requireNotNull(repositoryClient) { "No HTTP client configured on GitHubRepository" }
 }

@@ -3,7 +3,6 @@
 package nl.ordina.github.internal
 
 import kotlinx.serialization.Serializable
-import nl.ordina.github.*
 import nl.ordina.github.organization.GitHubOrganization
 import nl.ordina.github.organization.GitHubOrganizationInvite
 import nl.ordina.github.organization.GitHubOrganizationMember
@@ -12,17 +11,18 @@ import nl.ordina.github.repository.GitHubRepositoryPermissions
 import nl.ordina.github.team.GitHubTeam
 import nl.ordina.github.team.GitHubTeamParent
 import org.http4k.core.Body
+import org.http4k.core.HttpHandler
 import org.http4k.core.Status
 import org.http4k.format.KotlinxSerialization.auto
 
-internal object GitHubOrganizationClient {
+internal class GitHubOrganizationClient(private val client: HttpHandler) {
     fun getOrganization(organizationName: String): GitHubOrganization? {
         val lens = Body.auto<GitHubOrganization>().toLens()
         val request = GetRequest("orgs/$organizationName")
         val response = client(request)
 
         return when (response.status) {
-            Status.OK -> lens(response)
+            Status.OK -> lens(response).also { it.organizationClient = this }
             Status.NOT_FOUND -> null
             else -> null
         }
@@ -61,9 +61,10 @@ internal object GitHubOrganizationClient {
     }
 
     fun getRepositories(organizationName: String): List<GitHubRepository> {
+        val repositoryClient = GitHubRepositoryClient(client)
         val request = PaginatedRequest<GetRepositoryResponse>("orgs/$organizationName/repos")
 
-        return request(client).map { it.withOwner(organizationName) }
+        return request(client).map { it.withOwner(organizationName, repositoryClient) }
     }
 
     fun getMembers(organizationName: String): List<GitHubOrganizationMember> {
@@ -141,37 +142,12 @@ internal object GitHubOrganizationClient {
         val name: String,
         val full_name: String
     ) {
-        fun withOwner(owner: String): GitHubRepository =
+        fun withOwner(owner: String, repositoryClient: GitHubRepositoryClient): GitHubRepository =
             GitHubRepository(
                 owner = owner,
                 id,
                 name,
                 full_name
-            )
+            ).also { it.repositoryClient = repositoryClient }
     }
 }
-
-@Serializable
-data class GitHubOrganizationInviter(
-    val name: String? = null,
-    val email: String? = null,
-    val login: String,
-    val id: Int,
-    val node_id: String,
-    val avatar_url: String,
-    val gravatar_id: String? = null,
-    val url: String,
-    val html_url: String,
-    val followers_url: String,
-    val following_url: String,
-    val gists_url: String,
-    val starred_url: String,
-    val subscriptions_url: String,
-    val organizations_url: String,
-    val repos_url: String,
-    val events_url: String,
-    val received_events_url: String,
-    val type: String,
-    val site_admin: Boolean,
-    val starred_at: String? = null
-)
