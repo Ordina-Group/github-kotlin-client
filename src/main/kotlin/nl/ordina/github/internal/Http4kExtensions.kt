@@ -1,5 +1,6 @@
 package nl.ordina.github.internal
 
+import nl.ordina.github.GitHubApiException
 import org.http4k.core.Body
 import org.http4k.core.HttpHandler
 import org.http4k.core.Method
@@ -76,7 +77,7 @@ class PaginatedRequest<T : Any>(private val baseRequest: Request, private val le
                 }
             }
 
-            else -> emptyList()
+            else -> throw GitHubApiException.from(response, baseRequest.uri.toString())
         }
     }
 

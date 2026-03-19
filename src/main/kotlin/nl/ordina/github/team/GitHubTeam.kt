@@ -5,6 +5,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 import nl.ordina.github.internal.GitHubTeamClient
 import nl.ordina.github.repository.GitHubRepositoryPermissions
+import nl.ordina.github.repository.Permission
 
 @Serializable
 data class GitHubTeam(
@@ -39,8 +40,8 @@ data class GitHubTeam(
     fun getRepositories(): List<GitHubTeamRepository> =
         requireClient().getRepositories(organization, slug)
 
-    fun addRepository(repositoryName: String, permission: String) =
-        requireClient().addRepository(organization, slug, repositoryName, permission)
+    fun addRepository(repositoryName: String, permission: Permission) =
+        requireClient().addRepository(organization, slug, repositoryName, permission.value)
 
     private fun requireClient(): GitHubTeamClient =
         requireNotNull(teamClient) { "No HTTP client configured on GitHubTeam" }

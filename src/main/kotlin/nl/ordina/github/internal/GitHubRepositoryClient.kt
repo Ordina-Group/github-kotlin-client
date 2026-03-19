@@ -4,6 +4,7 @@ package nl.ordina.github.internal
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import nl.ordina.github.GitHubApiException
 import nl.ordina.github.repository.GitHubRepository
 import nl.ordina.github.repository.GitHubRepositoryCollaborator
 import nl.ordina.github.repository.GitHubRepositoryTeam
@@ -22,8 +23,7 @@ internal class GitHubRepositoryClient(private val client: HttpHandler) {
         return when (response.status) {
             Status.OK -> lens(response).withOwner(owner, this)
             Status.NOT_FOUND -> null
-            // TODO Deal with unexpected responses
-            else -> null
+            else -> throw GitHubApiException.from(response, "getRepository($owner, $repositoryName)")
         }
     }
 
@@ -35,7 +35,7 @@ internal class GitHubRepositoryClient(private val client: HttpHandler) {
 
         return when (response.status) {
             Status.OK -> lens(response).map { it.withOrganization(owner, teamClient) }
-            else -> emptyList()
+            else -> throw GitHubApiException.from(response, "getTeams($owner, $repositoryName)")
         }
     }
 

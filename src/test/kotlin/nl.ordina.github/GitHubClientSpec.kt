@@ -1,7 +1,9 @@
 package nl.ordina.github
 
+import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.WordSpec
 import io.kotest.matchers.collections.shouldBeEmpty
+import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
@@ -57,11 +59,56 @@ class GitHubClientSpec : WordSpec({
             client.getRepositories("github").shouldBeEmpty()
         }
 
-        "return an empty list when the organization does not exist" {
+        "throw GitHubApiException when getting repositories for a non-existent organization" {
             every { httpClient.invoke(matchUri("orgs/fake-org/repos?page=1&per_page=100")) }
                 .returns(Response(Status.NOT_FOUND))
 
-            client.getRepositories("fake-org").shouldBeEmpty()
+            shouldThrow<GitHubApiException> { client.getRepositories("fake-org") }
+        }
+    }
+
+    "GitHub client pagination" should {
+        "follow Link rel=next headers across multiple pages" {
+            val httpClient = mockk<HttpHandler>()
+            val client = GitHubClient(httpClient)
+            val repo = Defaults.repository(httpClient)
+
+            val linkHeader = """<https://api.github.com/orgs/github/repos?page=2>; rel="next""""
+
+            every { httpClient.invoke(matchUri("orgs/github/repos?page=1&per_page=100")) }
+                .returns(
+                    Response(Status.OK)
+                        .header("Link", linkHeader)
+                        .body(Json.encodeToString(listOf(repo)))
+                )
+            every { httpClient.invoke(matchUri("orgs/github/repos?page=2&per_page=100")) }
+                .returns(Response(Status.OK).body(Json.encodeToString(listOf(repo))))
+
+            client.getRepositories("github") shouldHaveSize 2
+        }
+    }
+
+    "GitHub client API errors" should {
+        "throw GitHubApiException when the API returns a server error for getOrganization" {
+            val httpClient = mockk<HttpHandler>()
+            val client = GitHubClient(httpClient)
+
+            every { httpClient.invoke(matchUri("orgs/github")) }
+                .returns(Response(Status.INTERNAL_SERVER_ERROR))
+
+            val exception = shouldThrow<GitHubApiException> { client.getOrganization("github") }
+            exception.status shouldBe Status.INTERNAL_SERVER_ERROR
+        }
+
+        "throw GitHubApiException when the API returns a server error for getRepository" {
+            val httpClient = mockk<HttpHandler>()
+            val client = GitHubClient(httpClient)
+
+            every { httpClient.invoke(matchUri("repos/github/Mona-Liza")) }
+                .returns(Response(Status.INTERNAL_SERVER_ERROR))
+
+            val exception = shouldThrow<GitHubApiException> { client.getRepository("github", "Mona-Liza") }
+            exception.status shouldBe Status.INTERNAL_SERVER_ERROR
         }
     }
 })

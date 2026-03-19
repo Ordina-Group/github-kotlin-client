@@ -4,6 +4,7 @@ package nl.ordina.github.internal
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import nl.ordina.github.GitHubApiException
 import nl.ordina.github.organization.GitHubOrganization
 import nl.ordina.github.organization.GitHubOrganizationInvite
 import nl.ordina.github.organization.GitHubOrganizationMember
@@ -11,6 +12,7 @@ import nl.ordina.github.repository.GitHubRepository
 import nl.ordina.github.repository.GitHubRepositoryPermissions
 import nl.ordina.github.team.GitHubTeam
 import nl.ordina.github.team.GitHubTeamParent
+import nl.ordina.github.team.TeamPrivacy
 import org.http4k.core.Body
 import org.http4k.core.HttpHandler
 import org.http4k.core.Status
@@ -25,7 +27,7 @@ internal class GitHubOrganizationClient(private val client: HttpHandler) {
         return when (response.status) {
             Status.OK -> lens(response).also { it.organizationClient = this }
             Status.NOT_FOUND -> null
-            else -> null
+            else -> throw GitHubApiException.from(response, "getOrganization($organizationName)")
         }
     }
 
@@ -43,7 +45,7 @@ internal class GitHubOrganizationClient(private val client: HttpHandler) {
         return when (response.status) {
             Status.OK -> lens(response).withOrganization(organizationName)
             Status.NOT_FOUND -> null
-            else -> null
+            else -> throw GitHubApiException.from(response, "getTeam($organizationName, $teamSlug)")
         }
     }
 
@@ -51,11 +53,11 @@ internal class GitHubOrganizationClient(private val client: HttpHandler) {
         organizationName: String,
         teamName: String,
         description: String? = null,
-        privacy: String = "secret",
+        privacy: TeamPrivacy = TeamPrivacy.Secret,
         parentTeamId: Int? = null
     ): GitHubTeam {
         val lens = Body.auto<GetTeamResponse>().toLens()
-        val body = CreateTeamRequest(teamName, description, privacy, parentTeamId)
+        val body = CreateTeamRequest(teamName, description, privacy.value, parentTeamId)
         val request = PostRequest("orgs/$organizationName/teams", body)
 
         return lens(client(request)).withOrganization(organizationName)
@@ -83,7 +85,7 @@ internal class GitHubOrganizationClient(private val client: HttpHandler) {
             Status.CREATED -> lens(response)
             Status.NOT_FOUND -> null
             Status.UNPROCESSABLE_ENTITY -> null
-            else -> null
+            else -> throw GitHubApiException.from(response, "invite($organizationName, $inviteeId)")
         }
     }
 

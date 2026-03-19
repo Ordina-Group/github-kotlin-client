@@ -24,7 +24,6 @@ class GitHubOrganizationSpec : WordSpec({
 
             organization.getRepositories().shouldBeEmpty()
         }
-
         "the organization has repositories" should {
             val httpClient = mockk<HttpHandler>()
             val organization = Defaults.organization(httpClient)

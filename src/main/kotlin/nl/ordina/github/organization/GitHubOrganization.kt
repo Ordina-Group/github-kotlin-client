@@ -8,6 +8,7 @@ import kotlinx.serialization.Transient
 import nl.ordina.github.internal.GitHubOrganizationClient
 import nl.ordina.github.repository.GitHubRepository
 import nl.ordina.github.team.GitHubTeam
+import nl.ordina.github.team.TeamPrivacy
 
 @Serializable
 @ConsistentCopyVisibility
@@ -28,7 +29,7 @@ data class GitHubOrganization internal constructor(
     fun createTeam(
         teamName: String,
         teamDescription: String? = null,
-        privacy: String = "secret",
+        privacy: TeamPrivacy = TeamPrivacy.Secret,
         parentTeamId: Int? = null
     ): GitHubTeam =
         requireClient().createTeam(login, teamName, teamDescription, privacy, parentTeamId)
