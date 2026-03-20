@@ -1,10 +1,8 @@
 package nl.ordina.github
 
-import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.WordSpec
-import io.kotest.matchers.collections.shouldBeEmpty
-import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.types.shouldBeInstanceOf
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
@@ -17,74 +15,77 @@ import org.http4k.core.Status
 
 class GitHubTeamSpec : WordSpec({
 
-    "A GitHub team" should {
+    val httpClient = mockk<HttpHandler>()
+    val client = GitHubClient(httpClient)
+    val team = Defaults.team()
 
-        "return an empty list when the team has no members" {
-            val httpClient = mockk<HttpHandler>()
-            val team = Defaults.team(httpClient)
+    "teams.getMembers" should {
 
-            every { httpClient.invoke(matchUri("orgs/${Defaults.owner}/teams/${team.slug}/members?page=1&per_page=100")) }
+        "return Found with an empty list when the team has no members" {
+            every { httpClient.invoke(matchUri("/orgs/${Defaults.owner}/teams/${team.slug}/members?page=1&per_page=100")) }
                 .returns(Response(Status.OK).body("[]"))
 
-            team.getMembers().shouldBeEmpty()
+            val result = client.teams.getMembers(team)
+
+            result.shouldBeInstanceOf<ApiResult.Found<List<GitHubTeamMember>>>()
+            result.getOrThrow() shouldBe emptyList()
         }
 
-        "return members when the team has members" {
-            val httpClient = mockk<HttpHandler>()
-            val team = Defaults.team(httpClient)
-
-            every { httpClient.invoke(matchUri("orgs/${Defaults.owner}/teams/${team.slug}/members?page=1&per_page=100")) }
+        "return Found with members when the team has members" {
+            every { httpClient.invoke(matchUri("/orgs/${Defaults.owner}/teams/${team.slug}/members?page=1&per_page=100")) }
                 .returns(Response(Status.OK).body(Json.encodeToString(listOf(Defaults.teamMember()))))
 
-            team.getMembers() shouldHaveSize 1
+            val result = client.teams.getMembers(team)
+
+            result.shouldBeInstanceOf<ApiResult.Found<List<GitHubTeamMember>>>()
+            result.getOrThrow().size shouldBe 1
         }
 
-        "add a member to the team" {
-            val httpClient = mockk<HttpHandler>()
-            val team = Defaults.team(httpClient)
+        "return Failure when the API returns a server error" {
+            every { httpClient.invoke(matchUri("/orgs/${Defaults.owner}/teams/${team.slug}/members?page=1&per_page=100")) }
+                .returns(Response(Status.INTERNAL_SERVER_ERROR))
 
-            every { httpClient.invoke(matchUri("/orgs/${Defaults.owner}/teams/${team.slug}/memberships/octocat")) }
-                .returns(Response(Status.OK).body("{}"))
+            val result = client.teams.getMembers(team)
 
-            team.addMember("octocat")
-
-            verify { httpClient.invoke(matchUri("/orgs/${Defaults.owner}/teams/${team.slug}/memberships/octocat")) }
-        }
-
-        "remove a member from the team" {
-            val httpClient = mockk<HttpHandler>()
-            val team = Defaults.team(httpClient)
-
-            every { httpClient.invoke(matchUri("/orgs/${Defaults.owner}/teams/${team.slug}/memberships/octocat")) }
-                .returns(Response(Status.NO_CONTENT).body(""))
-
-            team.removeMember("octocat")
-
-            verify { httpClient.invoke(matchUri("/orgs/${Defaults.owner}/teams/${team.slug}/memberships/octocat")) }
-        }
-
-        "return an empty list when the team has no repositories" {
-            val httpClient = mockk<HttpHandler>()
-            val team = Defaults.team(httpClient)
-
-            every { httpClient.invoke(matchUri("/orgs/${Defaults.owner}/teams/${team.slug}/repos?page=1&per_page=100")) }
-                .returns(Response(Status.OK).body("[]"))
-
-            team.getRepositories().shouldBeEmpty()
+            result.shouldBeInstanceOf<ApiResult.Failure>()
+            (result as ApiResult.Failure).exception.status shouldBe Status.INTERNAL_SERVER_ERROR
         }
     }
 
-    "A GitHub team encountering API errors" should {
+    "teams.addMember" should {
 
-        "throw GitHubApiException when getting members returns a server error" {
-            val httpClient = mockk<HttpHandler>()
-            val team = Defaults.team(httpClient)
+        "call the correct endpoint" {
+            every { httpClient.invoke(matchUri("/orgs/${Defaults.owner}/teams/${team.slug}/memberships/octocat")) }
+                .returns(Response(Status.OK).body("{}"))
 
-            every { httpClient.invoke(matchUri("orgs/${Defaults.owner}/teams/${team.slug}/members?page=1&per_page=100")) }
-                .returns(Response(Status.INTERNAL_SERVER_ERROR))
+            client.teams.addMember(team, "octocat")
 
-            val exception = shouldThrow<GitHubApiException> { team.getMembers() }
-            exception.status shouldBe Status.INTERNAL_SERVER_ERROR
+            verify { httpClient.invoke(matchUri("/orgs/${Defaults.owner}/teams/${team.slug}/memberships/octocat")) }
+        }
+    }
+
+    "teams.removeMember" should {
+
+        "call the correct endpoint" {
+            every { httpClient.invoke(matchUri("/orgs/${Defaults.owner}/teams/${team.slug}/memberships/octocat")) }
+                .returns(Response(Status.NO_CONTENT).body(""))
+
+            client.teams.removeMember(team, "octocat")
+
+            verify { httpClient.invoke(matchUri("/orgs/${Defaults.owner}/teams/${team.slug}/memberships/octocat")) }
+        }
+    }
+
+    "teams.getRepositories" should {
+
+        "return Found with an empty list when the team has no repositories" {
+            every { httpClient.invoke(matchUri("/orgs/${Defaults.owner}/teams/${team.slug}/repos?page=1&per_page=100")) }
+                .returns(Response(Status.OK).body("[]"))
+
+            val result = client.teams.getRepositories(team)
+
+            result.shouldBeInstanceOf<ApiResult.Found<*>>()
+            result.getOrThrow() shouldBe emptyList()
         }
     }
 })

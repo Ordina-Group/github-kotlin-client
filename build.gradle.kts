@@ -19,6 +19,7 @@ group = "nl.ordina"
 val http4kVersion = "6.15.1.0"
 val kotestVersion = "5.9.1"
 val mockkVersion = "1.14.3"
+val coroutinesVersion = "1.9.0"
 
 kotlin {
     jvmToolchain(21)
@@ -98,6 +99,7 @@ dependencies {
     implementation("org.http4k:http4k-core:$http4kVersion")
     implementation("org.http4k:http4k-client-apache:$http4kVersion")
     implementation("org.http4k:http4k-format-kotlinx-serialization:$http4kVersion")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutinesVersion")
     testImplementation("io.kotest:kotest-runner-junit5-jvm:$kotestVersion")
     testImplementation("io.kotest:kotest-assertions-core:$kotestVersion")
     testImplementation("io.mockk:mockk:$mockkVersion")

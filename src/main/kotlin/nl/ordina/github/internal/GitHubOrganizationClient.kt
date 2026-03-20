@@ -1,5 +1,3 @@
-@file:Suppress("PropertyName")
-
 package nl.ordina.github.internal
 
 import kotlinx.serialization.SerialName
@@ -25,13 +23,13 @@ internal class GitHubOrganizationClient(private val client: HttpHandler) {
     fun getOrganization(organizationName: String): GitHubOrganization? {
         logger.debug("Fetching organization '{}'", organizationName)
         val lens = Body.auto<GitHubOrganization>().toLens()
-        val request = GetRequest("orgs/$organizationName")
+        val request = GetRequest(GitHubApiEndpoints.organization(organizationName))
         val response = client(request)
 
         return when (response.status) {
             Status.OK -> {
                 logger.debug("Found organization '{}'", organizationName)
-                lens(response).also { it.organizationClient = this }
+                lens(response)
             }
             Status.NOT_FOUND -> {
                 logger.debug("Organization '{}' not found", organizationName)
@@ -42,18 +40,17 @@ internal class GitHubOrganizationClient(private val client: HttpHandler) {
     }
 
     fun getTeams(organizationName: String): List<GitHubTeam> {
-        val request = PaginatedRequest<GetTeamResponse>("orgs/$organizationName/teams")
-
-        return request(client).map { it.withOrganization(organizationName) }
+        val request = PaginatedRequest<GetTeamResponse>(GitHubApiEndpoints.organizationTeams(organizationName))
+        return request(client).map { it.toTeam(organizationName) }
     }
 
     fun getTeam(organizationName: String, teamSlug: String): GitHubTeam? {
         val lens = getLens<GetTeamResponse>()
-        val request = GetRequest("/orgs/$organizationName/teams/$teamSlug")
+        val request = GetRequest(GitHubApiEndpoints.organizationTeam(organizationName, teamSlug))
         val response = client(request)
 
         return when (response.status) {
-            Status.OK -> lens(response).withOrganization(organizationName)
+            Status.OK -> lens(response).toTeam(organizationName)
             Status.NOT_FOUND -> null
             else -> throw GitHubApiException.from(response, "getTeam($organizationName, $teamSlug)")
         }
@@ -68,27 +65,25 @@ internal class GitHubOrganizationClient(private val client: HttpHandler) {
     ): GitHubTeam {
         val lens = Body.auto<GetTeamResponse>().toLens()
         val body = CreateTeamRequest(teamName, description, privacy.value, parentTeamId)
-        val request = PostRequest("orgs/$organizationName/teams", body)
-
-        return lens(client(request)).withOrganization(organizationName)
+        val request = PostRequest(GitHubApiEndpoints.organizationTeams(organizationName), body)
+        return lens(client(request)).toTeam(organizationName)
     }
 
     fun getRepositories(organizationName: String): List<GitHubRepository> {
-        val repositoryClient = GitHubRepositoryClient(client)
-        val request = PaginatedRequest<GitHubRepositoryClient.GetRepositoryResponse>("orgs/$organizationName/repos")
-
-        return request(client).map { it.withOwner(organizationName, repositoryClient) }
+        val request = PaginatedRequest<GitHubRepositoryClient.GetRepositoryResponse>(
+            GitHubApiEndpoints.organizationRepositories(organizationName)
+        )
+        return request(client).map { it.toRepository(organizationName) }
     }
 
     fun getMembers(organizationName: String): List<GitHubOrganizationMember> {
-        val request = PaginatedRequest<GitHubOrganizationMember>("orgs/$organizationName/members")
-
+        val request = PaginatedRequest<GitHubOrganizationMember>(GitHubApiEndpoints.organizationMembers(organizationName))
         return request(client)
     }
 
     fun invite(organizationName: String, inviteeId: Int): GitHubOrganizationInvite? {
         val lens = Body.auto<GitHubOrganizationInvite>().toLens()
-        val request = PostRequest("/orgs/$organizationName/invitations", InviteRequest(inviteeId))
+        val request = PostRequest(GitHubApiEndpoints.organizationInvitations(organizationName), InviteRequest(inviteeId))
         val response = client(request)
 
         return when (response.status) {
@@ -121,24 +116,23 @@ internal class GitHubOrganizationClient(private val client: HttpHandler) {
         @SerialName("repositories_url") val repositoriesUrl: String,
         val parent: GitHubTeamParent? = null
     ) {
-        fun withOrganization(organizationName: String): GitHubTeam =
-            GitHubTeam(
-                organization = organizationName,
-                id = id,
-                nodeId = nodeId,
-                name = name,
-                slug = slug,
-                description = description,
-                privacy = privacy,
-                notificationSetting = notificationSetting,
-                permission = permission,
-                permissions = permissions,
-                url = url,
-                htmlUrl = htmlUrl,
-                membersUrl = membersUrl,
-                repositoriesUrl = repositoriesUrl,
-                parent = parent
-            )
+        fun toTeam(organizationName: String) = GitHubTeam(
+            organization = organizationName,
+            id = id,
+            nodeId = nodeId,
+            name = name,
+            slug = slug,
+            description = description,
+            privacy = privacy,
+            notificationSetting = notificationSetting,
+            permission = permission,
+            permissions = permissions,
+            url = url,
+            htmlUrl = htmlUrl,
+            membersUrl = membersUrl,
+            repositoriesUrl = repositoriesUrl,
+            parent = parent
+        )
     }
 
     @Serializable

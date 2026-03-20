@@ -1,5 +1,3 @@
-@file:Suppress("PropertyName")
-
 package nl.ordina.github.internal
 
 import kotlinx.serialization.SerialName
@@ -20,13 +18,13 @@ internal class GitHubRepositoryClient(private val client: HttpHandler) {
     fun getRepository(owner: String, repositoryName: String): GitHubRepository? {
         logger.debug("Fetching repository '{}/{}'", owner, repositoryName)
         val lens = Body.auto<GetRepositoryResponse>().toLens()
-        val request = GetRequest("repos/$owner/$repositoryName")
+        val request = GetRequest(GitHubApiEndpoints.repository(owner, repositoryName))
         val response = client(request)
 
         return when (response.status) {
             Status.OK -> {
                 logger.debug("Found repository '{}/{}'", owner, repositoryName)
-                lens(response).withOwner(owner, this)
+                lens(response).toRepository(owner)
             }
             Status.NOT_FOUND -> {
                 logger.debug("Repository '{}/{}' not found", owner, repositoryName)
@@ -38,12 +36,11 @@ internal class GitHubRepositoryClient(private val client: HttpHandler) {
 
     fun getTeams(owner: String, repositoryName: String): List<GitHubRepositoryTeam> {
         val lens = Body.auto<List<GetTeamResponse>>().toLens()
-        val request = GetRequest("/repos/$owner/$repositoryName/teams")
+        val request = GetRequest(GitHubApiEndpoints.repositoryTeams(owner, repositoryName))
         val response = client(request)
-        val teamClient = GitHubTeamClient(client)
 
         return when (response.status) {
-            Status.OK -> lens(response).map { it.withOrganization(owner, teamClient) }
+            Status.OK -> lens(response).map { it.toRepositoryTeam(owner) }
             else -> throw GitHubApiException.from(response, "getTeams($owner, $repositoryName)")
         }
     }
@@ -53,10 +50,11 @@ internal class GitHubRepositoryClient(private val client: HttpHandler) {
         repositoryName: String,
         affiliation: Affiliation
     ): List<GitHubRepositoryCollaborator> {
-        val request = ListRequest<GitHubRepositoryCollaborator>("/repos/$owner/$repositoryName/collaborators") {
+        val request = ListRequest<GitHubRepositoryCollaborator>(
+            GitHubApiEndpoints.repositoryCollaborators(owner, repositoryName)
+        ) {
             it.query("affiliation", affiliation.value)
         }
-
         return request(client)
     }
 
@@ -68,7 +66,7 @@ internal class GitHubRepositoryClient(private val client: HttpHandler) {
         newRepositoryName: String? = null
     ) {
         val request = PostRequest(
-            "/repos/$currentOwner/$currentRepositoryName/transfer",
+            GitHubApiEndpoints.repositoryTransfer(currentOwner, currentRepositoryName),
             TransferRepositoryRequest(newOwner, teamIds, newRepositoryName)
         )
         client(request)
@@ -82,13 +80,17 @@ internal class GitHubRepositoryClient(private val client: HttpHandler) {
     )
 
     @Serializable
-    data class GetRepositoryResponse(val id: Int, val name: String, @SerialName("full_name") val fullName: String) {
-        fun withOwner(owner: String, repositoryClient: GitHubRepositoryClient) = GitHubRepository(
+    data class GetRepositoryResponse(
+        val id: Int,
+        val name: String,
+        @SerialName("full_name") val fullName: String
+    ) {
+        fun toRepository(owner: String) = GitHubRepository(
             owner = owner,
             id = id,
             name = name,
             fullName = fullName
-        ).also { it.repositoryClient = repositoryClient }
+        )
     }
 
     @Serializable
@@ -106,7 +108,7 @@ internal class GitHubRepositoryClient(private val client: HttpHandler) {
         @SerialName("members_url") val membersUrl: String,
         @SerialName("repositories_url") val repositoriesUrl: String
     ) {
-        fun withOrganization(organization: String, teamClient: GitHubTeamClient) = GitHubRepositoryTeam(
+        fun toRepositoryTeam(organization: String) = GitHubRepositoryTeam(
             organization = organization,
             id = id,
             nodeId = nodeId,
@@ -120,7 +122,7 @@ internal class GitHubRepositoryClient(private val client: HttpHandler) {
             permission = permission,
             membersUrl = membersUrl,
             repositoriesUrl = repositoriesUrl
-        ).also { it.teamClient = teamClient }
+        )
     }
 
     enum class Affiliation(val value: String) {

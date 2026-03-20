@@ -31,6 +31,8 @@ dependencies {
 
 ## Usage
 
+All service methods are `suspend` functions. Call them from a coroutine or use `runBlocking` for one-off use.
+
 ### Creating a client
 
 ```kotlin
@@ -46,22 +48,75 @@ val client = GitHubClient.create(
 )
 ```
 
+`GitHubClient` exposes three service objects:
+- `client.organizations` — `OrganizationService`
+- `client.repositories` — `RepositoryService`
+- `client.teams` — `TeamService`
+
+---
+
+### ApiResult
+
+Single-resource lookups return `ApiResult<T>`, a sealed type:
+
+```kotlin
+sealed class ApiResult<out T> {
+    data class Found<out T>(val value: T) : ApiResult<T>()  // resource exists
+    data object NotFound : ApiResult<Nothing>()             // HTTP 404
+    data class Failure(val exception: GitHubApiException)   // unexpected error
+}
+```
+
+Use `when` to handle all cases at compile time, or convenience helpers:
+
+```kotlin
+val result = client.organizations.get("my-org")
+
+when (result) {
+    is ApiResult.Found   -> println(result.value.login)
+    is ApiResult.NotFound -> println("not found")
+    is ApiResult.Failure  -> println("error: ${result.exception.message}")
+}
+
+// Or simply throw on failure / not-found:
+val org = client.organizations.get("my-org").getOrThrow()
+
+// Or get null on non-success:
+val org = client.organizations.get("my-org").getOrNull()
+```
+
+List operations return `ApiResult<List<T>>` — `NotFound` is never returned for lists.
+
 ---
 
 ### Organizations
 
 ```kotlin
-// Fetch an organization (returns null if not found)
-val org = client.getOrganization("my-org") ?: error("org not found")
+// Fetch a single organization
+val org = client.organizations.get("my-org").getOrThrow()
 
 // List members
-val members: List<GitHubOrganizationMember> = org.getMembers()
+val members = client.organizations.getMembers(org).getOrThrow()
 
 // List repositories
-val repos: List<GitHubRepository> = org.getRepositories()
+val repos = client.organizations.getRepositories(org).getOrThrow()
 
 // Invite a user by GitHub user ID
-val invite: GitHubOrganizationInvite? = org.invite(inviteeId = 1234567)
+val invite = client.organizations.invite(org, inviteeId = 1234567)
+
+// List teams
+val teams = client.organizations.getTeams(org).getOrThrow()
+
+// Get a single team
+val team = client.organizations.getTeam(org, "platform").getOrThrow()
+
+// Create a team
+val newTeam = client.organizations.createTeam(
+    organizationName = org.login,
+    teamName = "platform",
+    description = "Platform engineering",
+    privacy = TeamPrivacy.Secret
+).getOrThrow()
 ```
 
 ---
@@ -69,22 +124,19 @@ val invite: GitHubOrganizationInvite? = org.invite(inviteeId = 1234567)
 ### Repositories
 
 ```kotlin
-// Fetch a single repository (returns null if not found)
-val repo = client.getRepository("my-org", "my-repo") ?: error("repo not found")
-
-// Fetch all repositories for an organization
-val repos = client.getRepositories("my-org")
+// Fetch a single repository
+val repo = client.repositories.get("my-org", "my-repo").getOrThrow()
 
 // List teams with explicit access
-val teams: List<GitHubRepositoryTeam> = repo.getTeams()
+val teams = client.repositories.getTeams(repo).getOrThrow()
 
 // List collaborators
-val all      = repo.getAllCollaborators()
-val direct   = repo.getDirectCollaborators()
-val outside  = repo.getOutsideCollaborators()
+val all     = client.repositories.getAllCollaborators(repo).getOrThrow()
+val direct  = client.repositories.getDirectCollaborators(repo).getOrThrow()
+val outside = client.repositories.getOutsideCollaborators(repo).getOrThrow()
 
 // Transfer to another owner
-repo.transfer(newOwner = "new-org")
+client.repositories.transfer(repo, newOwner = "new-org")
 ```
 
 ---
@@ -92,46 +144,30 @@ repo.transfer(newOwner = "new-org")
 ### Teams
 
 ```kotlin
-val org = client.getOrganization("my-org") ?: error("org not found")
+val team = client.organizations.getTeam("my-org", "platform").getOrThrow()
 
-// List all teams
-val teams: List<GitHubTeam> = org.getTeams()
+// Members
+val members = client.teams.getMembers(team).getOrThrow()
+client.teams.addMember(team, "octocat")
+client.teams.removeMember(team, "octocat")
 
-// Fetch a single team by slug
-val team = org.getTeam("my-team") ?: error("team not found")
-
-// Create a team
-val newTeam = org.createTeam(
-    teamName = "platform",
-    teamDescription = "Platform engineering",
-    privacy = TeamPrivacy.Secret
-)
-
-// Team members
-val members: List<GitHubTeamMember> = team.getMembers()
-team.addMember("octocat")
-team.removeMember("octocat")
-
-// Team repositories
-val teamRepos: List<GitHubTeamRepository> = team.getRepositories()
-team.addRepository("my-repo", Permission.Push)
+// Repositories
+val repos = client.teams.getRepositories(team).getOrThrow()
+client.teams.addRepository(team, "my-repo", Permission.Push)
 ```
 
 ---
 
 ### Error handling
 
-All unexpected HTTP responses (5xx, etc.) throw a `GitHubApiException`:
+`GitHubApiException` is only thrown if something unexpected happens outside the service layer (e.g., a network-level error). The service methods themselves return `ApiResult` and never throw:
 
 ```kotlin
-try {
-    val org = client.getOrganization("my-org")
-} catch (e: GitHubApiException) {
-    println("GitHub API error: ${e.status.code} — ${e.message}")
+val result = client.organizations.get("my-org")
+if (result is ApiResult.Failure) {
+    println("GitHub API error: ${result.exception.status.code} — ${result.exception.message}")
 }
 ```
-
-`null` is returned only for expected "not found" cases (HTTP 404).
 
 ---
 

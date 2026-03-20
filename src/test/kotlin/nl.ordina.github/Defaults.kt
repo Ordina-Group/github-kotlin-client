@@ -1,33 +1,29 @@
 package nl.ordina.github
 
-import nl.ordina.github.internal.GitHubOrganizationClient
-import nl.ordina.github.internal.GitHubRepositoryClient
-import nl.ordina.github.internal.GitHubTeamClient
 import nl.ordina.github.organization.GitHubOrganization
 import nl.ordina.github.repository.GitHubRepository
 import nl.ordina.github.team.GitHubTeam
 import nl.ordina.github.team.GitHubTeamMember
-import org.http4k.core.HttpHandler
 
 object Defaults {
     const val owner = "github"
 
-    fun organization(httpClient: HttpHandler) = GitHubOrganization(
+    fun organization() = GitHubOrganization(
         login = owner,
         id = 1,
         nodeId = "MDEyOk9yZ2FuaXphdGlvbjE=",
         name = "github",
         company = "GitHub"
-    ).also { it.organizationClient = GitHubOrganizationClient(httpClient) }
+    )
 
-    fun repository(httpClient: HttpHandler) = GitHubRepository(
+    fun repository() = GitHubRepository(
         owner = owner,
         id = 1,
         name = "Mona-Liza",
         fullName = "github/Mona-Liza"
-    ).also { it.repositoryClient = GitHubRepositoryClient(httpClient) }
+    )
 
-    fun team(httpClient: HttpHandler) = GitHubTeam(
+    fun team() = GitHubTeam(
         organization = owner,
         id = 1,
         nodeId = "T_kgDOA",
@@ -43,7 +39,7 @@ object Defaults {
         membersUrl = "https://api.github.com/orgs/$owner/teams/justice-league/members{/member}",
         repositoriesUrl = "https://api.github.com/orgs/$owner/teams/justice-league/repos",
         parent = null
-    ).also { it.teamClient = GitHubTeamClient(httpClient) }
+    )
 
     fun teamMember() = GitHubTeamMember(
         login = "octocat",

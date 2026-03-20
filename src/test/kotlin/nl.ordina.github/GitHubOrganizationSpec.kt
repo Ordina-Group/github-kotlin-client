@@ -1,38 +1,47 @@
 package nl.ordina.github
 
 import io.kotest.core.spec.style.WordSpec
-import io.kotest.matchers.collections.shouldBeEmpty
-import io.kotest.matchers.collections.shouldHaveSize
+import io.kotest.matchers.shouldBe
+import io.kotest.matchers.types.shouldBeInstanceOf
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import nl.ordina.github.repository.GitHubRepository
 import org.http4k.core.HttpHandler
 import org.http4k.core.Response
 import org.http4k.core.Status
 
 class GitHubOrganizationSpec : WordSpec({
 
-    "A GitHub organization listing its repositories" When {
+    val httpClient = mockk<HttpHandler>()
+    val client = GitHubClient(httpClient)
+    val org = Defaults.organization()
+
+    "organizations.getRepositories" When {
 
         "the organization has no repositories" should {
-            val httpClient = mockk<HttpHandler>()
-            val organization = Defaults.organization(httpClient)
+            "return Found with an empty list" {
+                every { httpClient.invoke(matchUri("/orgs/${org.login}/repos?page=1&per_page=100")) }
+                    .returns(Response(Status.OK).body("[]"))
 
-            every { httpClient.invoke(matchUri("orgs/${organization.login}/repos?page=1&per_page=100")) }
-                .returns(Response(Status.OK).body("[]"))
+                val result = client.organizations.getRepositories(org)
 
-            organization.getRepositories().shouldBeEmpty()
+                result.shouldBeInstanceOf<ApiResult.Found<List<GitHubRepository>>>()
+                result.getOrThrow() shouldBe emptyList()
+            }
         }
+
         "the organization has repositories" should {
-            val httpClient = mockk<HttpHandler>()
-            val organization = Defaults.organization(httpClient)
-            val repository = Defaults.repository(httpClient)
+            "return Found with all repositories" {
+                every { httpClient.invoke(matchUri("/orgs/${org.login}/repos?page=1&per_page=100")) }
+                    .returns(Response(Status.OK).body(Json.encodeToString(listOf(Defaults.repository()))))
 
-            every { httpClient.invoke(matchUri("orgs/${organization.login}/repos?page=1&per_page=100")) }
-                .returns(Response(Status.OK).body(Json.encodeToString(listOf(repository))))
+                val result = client.organizations.getRepositories(org)
 
-            organization.getRepositories() shouldHaveSize 1
+                result.shouldBeInstanceOf<ApiResult.Found<List<GitHubRepository>>>()
+                result.getOrThrow().size shouldBe 1
+            }
         }
     }
 })

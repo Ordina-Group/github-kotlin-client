@@ -1,41 +1,41 @@
 package nl.ordina.github
 
-import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.WordSpec
-import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.types.shouldBeInstanceOf
 import io.mockk.every
 import io.mockk.mockk
+import nl.ordina.github.repository.GitHubRepositoryTeam
 import org.http4k.core.HttpHandler
 import org.http4k.core.Response
 import org.http4k.core.Status
 
 class GitHubRepositorySpec : WordSpec({
 
-    "A GitHub repository" should {
+    val httpClient = mockk<HttpHandler>()
+    val client = GitHubClient(httpClient)
+    val repo = Defaults.repository()
 
-        "return an empty list when the repository has no teams" {
-            val httpClient = mockk<HttpHandler>()
-            val repository = Defaults.repository(httpClient)
+    "repositories.getTeams" should {
 
-            every { httpClient.invoke(matchUri("/repos/${Defaults.owner}/${repository.name}/teams")) } returns
-                Response(Status.OK).body("[]")
+        "return Found with an empty list when the repository has no teams" {
+            every { httpClient.invoke(matchUri("/repos/${repo.owner}/${repo.name}/teams")) }
+                .returns(Response(Status.OK).body("[]"))
 
-            repository.getTeams().shouldBeEmpty()
+            val result = client.repositories.getTeams(repo)
+
+            result.shouldBeInstanceOf<ApiResult.Found<List<GitHubRepositoryTeam>>>()
+            result.getOrThrow() shouldBe emptyList()
         }
-    }
 
-    "A GitHub repository encountering API errors" should {
+        "return Failure when the API returns a server error" {
+            every { httpClient.invoke(matchUri("/repos/${repo.owner}/${repo.name}/teams")) }
+                .returns(Response(Status.INTERNAL_SERVER_ERROR))
 
-        "throw GitHubApiException when the API returns a server error for getTeams" {
-            val httpClient = mockk<HttpHandler>()
-            val repository = Defaults.repository(httpClient)
+            val result = client.repositories.getTeams(repo)
 
-            every { httpClient.invoke(matchUri("/repos/${Defaults.owner}/${repository.name}/teams")) } returns
-                Response(Status.INTERNAL_SERVER_ERROR)
-
-            val exception = shouldThrow<GitHubApiException> { repository.getTeams() }
-            exception.status shouldBe Status.INTERNAL_SERVER_ERROR
+            result.shouldBeInstanceOf<ApiResult.Failure>()
+            (result as ApiResult.Failure).exception.status shouldBe Status.INTERNAL_SERVER_ERROR
         }
     }
 })

@@ -1,12 +1,8 @@
 package nl.ordina.github
 
-import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.WordSpec
-import io.kotest.matchers.collections.shouldBeEmpty
-import io.kotest.matchers.collections.shouldHaveSize
-import io.kotest.matchers.nulls.shouldBeNull
-import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.types.shouldBeInstanceOf
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.serialization.encodeToString
@@ -21,94 +17,101 @@ import org.http4k.core.with
 import org.http4k.format.KotlinxSerialization.auto
 
 class GitHubClientSpec : WordSpec({
-    "GitHub client" should {
-        val httpClient = mockk<HttpHandler>()
-        val client = GitHubClient(httpClient)
 
-        val organizationLens = Body.auto<GitHubOrganization>().toLens()
+    val httpClient = mockk<HttpHandler>()
+    val client = GitHubClient(httpClient)
 
-        "return null when getting a non-existing organization" {
-            every { httpClient.invoke(matchUri("orgs/fake-org")) } returns Response(Status.NOT_FOUND)
+    val organizationLens = Body.auto<GitHubOrganization>().toLens()
 
-            client.getOrganization("fake-org").shouldBeNull()
+    "organizations.get" should {
+
+        "return NotFound when the organization does not exist" {
+            every { httpClient.invoke(matchUri("/orgs/fake-org")) } returns Response(Status.NOT_FOUND)
+
+            client.organizations.get("fake-org") shouldBe ApiResult.NotFound
         }
 
-        "return an organization when getting an existing organization" {
-            every { httpClient.invoke(matchUri("orgs/github")) }
-                .returns(Response(Status.OK).with(organizationLens of Defaults.organization(httpClient)))
+        "return Found with the organization when it exists" {
+            every { httpClient.invoke(matchUri("/orgs/github")) }
+                .returns(Response(Status.OK).with(organizationLens of Defaults.organization()))
 
-            val organization = client.getOrganization("github")
+            val result = client.organizations.get("github")
 
-            organization.shouldNotBeNull()
-            organization.login shouldBe "github"
-            organization.id shouldBe 1
-            organization.name shouldBe "github"
-            organization.company shouldBe "GitHub"
+            result.shouldBeInstanceOf<ApiResult.Found<GitHubOrganization>>()
+            val org = result.getOrThrow()
+            org.login shouldBe "github"
+            org.id shouldBe 1
+            org.name shouldBe "github"
+            org.company shouldBe "GitHub"
         }
 
-        "return null when getting a repository that does not exist" {
-            every { httpClient.invoke(matchUri("repos/github/fake-repo")) } returns Response(Status.NOT_FOUND)
+        "return Failure on server error" {
+            every { httpClient.invoke(matchUri("/orgs/github")) } returns Response(Status.INTERNAL_SERVER_ERROR)
 
-            client.getRepository("github", "fake-repo").shouldBeNull()
-        }
+            val result = client.organizations.get("github")
 
-        "return an empty list when the organization has no repositories" {
-            every { httpClient.invoke(matchUri("orgs/github/repos?page=1&per_page=100")) }
-                .returns(Response(Status.OK).body(Json.encodeToString(emptyList<GitHubRepository>())))
-
-            client.getRepositories("github").shouldBeEmpty()
-        }
-
-        "throw GitHubApiException when getting repositories for a non-existent organization" {
-            every { httpClient.invoke(matchUri("orgs/fake-org/repos?page=1&per_page=100")) }
-                .returns(Response(Status.NOT_FOUND))
-
-            shouldThrow<GitHubApiException> { client.getRepositories("fake-org") }
+            result.shouldBeInstanceOf<ApiResult.Failure>()
+            (result as ApiResult.Failure).exception.status shouldBe Status.INTERNAL_SERVER_ERROR
         }
     }
 
-    "GitHub client pagination" should {
-        "follow Link rel=next headers across multiple pages" {
-            val httpClient = mockk<HttpHandler>()
-            val client = GitHubClient(httpClient)
-            val repo = Defaults.repository(httpClient)
+    "repositories.get" should {
 
+        "return NotFound when the repository does not exist" {
+            every { httpClient.invoke(matchUri("/repos/github/fake-repo")) } returns Response(Status.NOT_FOUND)
+
+            client.repositories.get("github", "fake-repo") shouldBe ApiResult.NotFound
+        }
+
+        "return Failure on server error" {
+            every { httpClient.invoke(matchUri("/repos/github/Mona-Liza")) } returns Response(Status.INTERNAL_SERVER_ERROR)
+
+            val result = client.repositories.get("github", "Mona-Liza")
+
+            result.shouldBeInstanceOf<ApiResult.Failure>()
+            (result as ApiResult.Failure).exception.status shouldBe Status.INTERNAL_SERVER_ERROR
+        }
+    }
+
+    "organizations.getRepositories" should {
+
+        "return Found with empty list when the organization has no repositories" {
+            every { httpClient.invoke(matchUri("/orgs/github/repos?page=1&per_page=100")) }
+                .returns(Response(Status.OK).body(Json.encodeToString(emptyList<GitHubRepository>())))
+
+            val result = client.organizations.getRepositories("github")
+
+            result.shouldBeInstanceOf<ApiResult.Found<List<GitHubRepository>>>()
+            result.getOrThrow() shouldBe emptyList()
+        }
+
+        "return Failure when the organization does not exist" {
+            every { httpClient.invoke(matchUri("/orgs/fake-org/repos?page=1&per_page=100")) }
+                .returns(Response(Status.NOT_FOUND))
+
+            client.organizations.getRepositories("fake-org").shouldBeInstanceOf<ApiResult.Failure>()
+        }
+    }
+
+    "organizations.getRepositories pagination" should {
+
+        "follow Link rel=next headers across multiple pages" {
+            val repo = Defaults.repository()
             val linkHeader = """<https://api.github.com/orgs/github/repos?page=2>; rel="next""""
 
-            every { httpClient.invoke(matchUri("orgs/github/repos?page=1&per_page=100")) }
+            every { httpClient.invoke(matchUri("/orgs/github/repos?page=1&per_page=100")) }
                 .returns(
                     Response(Status.OK)
                         .header("Link", linkHeader)
                         .body(Json.encodeToString(listOf(repo)))
                 )
-            every { httpClient.invoke(matchUri("orgs/github/repos?page=2&per_page=100")) }
+            every { httpClient.invoke(matchUri("/orgs/github/repos?page=2&per_page=100")) }
                 .returns(Response(Status.OK).body(Json.encodeToString(listOf(repo))))
 
-            client.getRepositories("github") shouldHaveSize 2
-        }
-    }
+            val result = client.organizations.getRepositories("github")
 
-    "GitHub client API errors" should {
-        "throw GitHubApiException when the API returns a server error for getOrganization" {
-            val httpClient = mockk<HttpHandler>()
-            val client = GitHubClient(httpClient)
-
-            every { httpClient.invoke(matchUri("orgs/github")) }
-                .returns(Response(Status.INTERNAL_SERVER_ERROR))
-
-            val exception = shouldThrow<GitHubApiException> { client.getOrganization("github") }
-            exception.status shouldBe Status.INTERNAL_SERVER_ERROR
-        }
-
-        "throw GitHubApiException when the API returns a server error for getRepository" {
-            val httpClient = mockk<HttpHandler>()
-            val client = GitHubClient(httpClient)
-
-            every { httpClient.invoke(matchUri("repos/github/Mona-Liza")) }
-                .returns(Response(Status.INTERNAL_SERVER_ERROR))
-
-            val exception = shouldThrow<GitHubApiException> { client.getRepository("github", "Mona-Liza") }
-            exception.status shouldBe Status.INTERNAL_SERVER_ERROR
+            result.shouldBeInstanceOf<ApiResult.Found<List<GitHubRepository>>>()
+            result.getOrThrow().size shouldBe 2
         }
     }
 })
