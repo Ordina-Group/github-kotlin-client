@@ -1,0 +1,63 @@
+package com.soprasteria.github
+
+import com.soprasteria.github.organization.GitHubOrganization
+import com.soprasteria.github.repository.GitHubRepository
+import com.soprasteria.github.team.GitHubTeam
+import com.soprasteria.github.team.GitHubTeamMember
+
+object Defaults {
+    const val owner = "github"
+
+    fun organization() = GitHubOrganization(
+        login = owner,
+        id = 1,
+        nodeId = "MDEyOk9yZ2FuaXphdGlvbjE=",
+        name = "github",
+        company = "GitHub"
+    )
+
+    fun repository() = GitHubRepository(
+        owner = owner,
+        id = 1,
+        name = "Mona-Liza",
+        fullName = "github/Mona-Liza"
+    )
+
+    fun team() = GitHubTeam(
+        organization = owner,
+        id = 1,
+        nodeId = "T_kgDOA",
+        name = "Justice League",
+        slug = "justice-league",
+        description = "The best team",
+        privacy = "secret",
+        notificationSetting = "notifications_enabled",
+        permission = "pull",
+        permissions = null,
+        url = "https://api.github.com/orgs/$owner/teams/justice-league",
+        htmlUrl = "https://github.com/orgs/$owner/teams/justice-league",
+        membersUrl = "https://api.github.com/orgs/$owner/teams/justice-league/members{/member}",
+        repositoriesUrl = "https://api.github.com/orgs/$owner/teams/justice-league/repos",
+        parent = null
+    )
+
+    fun teamMember() = GitHubTeamMember(
+        login = "octocat",
+        id = 1,
+        nodeId = "MDQ6VXNlcjE=",
+        avatarUrl = "https://github.com/images/error/octocat_happy.gif",
+        url = "https://api.github.com/users/octocat",
+        htmlUrl = "https://github.com/octocat",
+        followersUrl = "https://api.github.com/users/octocat/followers",
+        followingUrl = "https://api.github.com/users/octocat/following{/other_user}",
+        gistsUrl = "https://api.github.com/users/octocat/gists{/gist_id}",
+        starredUrl = "https://api.github.com/users/octocat/starred{/owner}{/repo}",
+        subscriptionsUrl = "https://api.github.com/users/octocat/subscriptions",
+        organizationsUrl = "https://api.github.com/users/octocat/orgs",
+        reposUrl = "https://api.github.com/users/octocat/repos",
+        eventsUrl = "https://api.github.com/users/octocat/events{/privacy}",
+        receivedEventsUrl = "https://api.github.com/users/octocat/received_events",
+        type = "User",
+        siteAdmin = false
+    )
+}

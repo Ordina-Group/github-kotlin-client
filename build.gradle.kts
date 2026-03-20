@@ -14,7 +14,7 @@ plugins {
     jacoco
 }
 
-group = "nl.ordina"
+group = "com.soprasteria"
 
 val http4kVersion = "6.15.1.0"
 val kotestVersion = "5.9.1"
@@ -35,7 +35,7 @@ publishing {
     repositories {
         maven {
             name = "GitHubPackages"
-            url = uri("https://maven.pkg.github.com/Ordina-Group/github-kotlin-client")
+            url = uri("https://maven.pkg.github.com/soprasteria/github-kotlin-client")
             credentials {
                 username = project.findProperty("gpr.user") as String? ?: System.getenv("GITHUB_USERNAME")
                 password = project.findProperty("gpr.key") as String? ?: System.getenv("GITHUB_TOKEN")
@@ -47,10 +47,10 @@ publishing {
 jreleaser {
     project {
         description.set("A library for using the GitHub API from the JVM")
-        links.homepage.set("https://github.com/Ordina-Group/github-kotlin-client")
+        links.homepage.set("https://github.com/soprasteria/github-kotlin-client")
         authors.add("Donovan de Kuiper")
         license.set("APACHE-2.0")
-        copyright.set("Copyright © 2023 Ordina")
+        copyright.set("Copyright © 2026 Sopra Steria")
     }
 
     release {

@@ -16,7 +16,7 @@ The library is published to GitHub Packages.
 ```kotlin
 repositories {
     maven {
-        url = uri("https://maven.pkg.github.com/Ordina-Group/github-kotlin-client")
+        url = uri("https://maven.pkg.github.com/soprasteria/github-kotlin-client")
         credentials {
             username = System.getenv("GITHUB_USERNAME")
             password = System.getenv("GITHUB_TOKEN")
@@ -25,7 +25,7 @@ repositories {
 }
 
 dependencies {
-    implementation("nl.ordina:github-kotlin-client:<version>")
+    implementation("com.soprasteria:github-kotlin-client:<version>")
 }
 ```
 
@@ -173,7 +173,7 @@ if (result is ApiResult.Failure) {
 
 ## Logging
 
-The library uses [SLF4J](https://www.slf4j.org/) for logging. Add your preferred SLF4J backend (e.g. Logback) to your project and set the log level for `nl.ordina.github` to `DEBUG` to see request/pagination details.
+The library uses [SLF4J](https://www.slf4j.org/) for logging. Add your preferred SLF4J backend (e.g. Logback) to your project and set the log level for `com.soprasteria.github` to `DEBUG` to see request/pagination details.
 
 ## License
 
