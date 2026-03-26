@@ -1,7 +1,5 @@
 package com.soprasteria.github.internal
 
-import kotlinx.serialization.SerialName
-import kotlinx.serialization.Serializable
 import com.soprasteria.github.GitHubApiException
 import com.soprasteria.github.organization.GitHubOrganization
 import com.soprasteria.github.organization.GitHubOrganizationInvite
@@ -11,13 +9,17 @@ import com.soprasteria.github.repository.GitHubRepositoryPermissions
 import com.soprasteria.github.team.GitHubTeam
 import com.soprasteria.github.team.GitHubTeamParent
 import com.soprasteria.github.team.TeamPrivacy
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 import org.http4k.core.Body
 import org.http4k.core.HttpHandler
 import org.http4k.core.Status
 import org.http4k.format.KotlinxSerialization.auto
 import org.slf4j.LoggerFactory
 
-internal class GitHubOrganizationClient(private val client: HttpHandler) {
+internal class GitHubOrganizationClient(
+    private val client: HttpHandler,
+) {
     private val logger = LoggerFactory.getLogger(GitHubOrganizationClient::class.java)
 
     fun getOrganization(organizationName: String): GitHubOrganization? {
@@ -44,7 +46,10 @@ internal class GitHubOrganizationClient(private val client: HttpHandler) {
         return request(client).map { it.toTeam(organizationName) }
     }
 
-    fun getTeam(organizationName: String, teamSlug: String): GitHubTeam? {
+    fun getTeam(
+        organizationName: String,
+        teamSlug: String,
+    ): GitHubTeam? {
         val lens = getLens<GetTeamResponse>()
         val request = GetRequest(GitHubApiEndpoints.organizationTeam(organizationName, teamSlug))
         val response = client(request)
@@ -61,7 +66,7 @@ internal class GitHubOrganizationClient(private val client: HttpHandler) {
         teamName: String,
         description: String? = null,
         privacy: TeamPrivacy = TeamPrivacy.Secret,
-        parentTeamId: Int? = null
+        parentTeamId: Int? = null,
     ): GitHubTeam {
         val lens = Body.auto<GetTeamResponse>().toLens()
         val body = CreateTeamRequest(teamName, description, privacy.value, parentTeamId)
@@ -70,20 +75,26 @@ internal class GitHubOrganizationClient(private val client: HttpHandler) {
     }
 
     fun getRepositories(organizationName: String): List<GitHubRepository> {
-        val request = PaginatedRequest<GitHubRepositoryClient.GetRepositoryResponse>(
-            GitHubApiEndpoints.organizationRepositories(organizationName)
-        )
+        val request =
+            PaginatedRequest<GitHubRepositoryClient.GetRepositoryResponse>(
+                GitHubApiEndpoints.organizationRepositories(organizationName),
+            )
         return request(client).map { it.toRepository(organizationName) }
     }
 
     fun getMembers(organizationName: String): List<GitHubOrganizationMember> {
-        val request = PaginatedRequest<GitHubOrganizationMember>(GitHubApiEndpoints.organizationMembers(organizationName))
+        val request =
+            PaginatedRequest<GitHubOrganizationMember>(GitHubApiEndpoints.organizationMembers(organizationName))
         return request(client)
     }
 
-    fun invite(organizationName: String, inviteeId: Int): GitHubOrganizationInvite? {
+    fun invite(
+        organizationName: String,
+        inviteeId: Int,
+    ): GitHubOrganizationInvite? {
         val lens = Body.auto<GitHubOrganizationInvite>().toLens()
-        val request = PostRequest(GitHubApiEndpoints.organizationInvitations(organizationName), InviteRequest(inviteeId))
+        val request =
+            PostRequest(GitHubApiEndpoints.organizationInvitations(organizationName), InviteRequest(inviteeId))
         val response = client(request)
 
         return when (response.status) {
@@ -96,7 +107,7 @@ internal class GitHubOrganizationClient(private val client: HttpHandler) {
 
     @Serializable
     internal data class InviteRequest(
-        @SerialName("invitee_id") val inviteeId: Int
+        @SerialName("invitee_id") val inviteeId: Int,
     )
 
     @Serializable
@@ -114,25 +125,26 @@ internal class GitHubOrganizationClient(private val client: HttpHandler) {
         @SerialName("html_url") val htmlUrl: String,
         @SerialName("members_url") val membersUrl: String,
         @SerialName("repositories_url") val repositoriesUrl: String,
-        val parent: GitHubTeamParent? = null
+        val parent: GitHubTeamParent? = null,
     ) {
-        fun toTeam(organizationName: String) = GitHubTeam(
-            organization = organizationName,
-            id = id,
-            nodeId = nodeId,
-            name = name,
-            slug = slug,
-            description = description,
-            privacy = privacy,
-            notificationSetting = notificationSetting,
-            permission = permission,
-            permissions = permissions,
-            url = url,
-            htmlUrl = htmlUrl,
-            membersUrl = membersUrl,
-            repositoriesUrl = repositoriesUrl,
-            parent = parent
-        )
+        fun toTeam(organizationName: String) =
+            GitHubTeam(
+                organization = organizationName,
+                id = id,
+                nodeId = nodeId,
+                name = name,
+                slug = slug,
+                description = description,
+                privacy = privacy,
+                notificationSetting = notificationSetting,
+                permission = permission,
+                permissions = permissions,
+                url = url,
+                htmlUrl = htmlUrl,
+                membersUrl = membersUrl,
+                repositoriesUrl = repositoriesUrl,
+                parent = parent,
+            )
     }
 
     @Serializable
@@ -140,6 +152,6 @@ internal class GitHubOrganizationClient(private val client: HttpHandler) {
         val name: String,
         val description: String? = null,
         val privacy: String = "secret",
-        @SerialName("parent_team_id") val parentTeamId: Int? = null
+        @SerialName("parent_team_id") val parentTeamId: Int? = null,
     )
 }

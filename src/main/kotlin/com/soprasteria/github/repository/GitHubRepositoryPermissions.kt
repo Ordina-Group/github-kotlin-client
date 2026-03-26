@@ -2,12 +2,14 @@ package com.soprasteria.github.repository
 
 import kotlinx.serialization.Serializable
 
-enum class Permission(val value: String) {
+enum class Permission(
+    val value: String,
+) {
     Admin("admin"),
     Maintain("maintain"),
     Push("push"),
     Triage("triage"),
-    Pull("pull")
+    Pull("pull"),
 }
 
 @Serializable
@@ -17,7 +19,7 @@ data class GitHubRepositoryPermissions internal constructor(
     val triage: Boolean? = null,
     val push: Boolean? = null,
     val maintain: Boolean? = null,
-    val admin: Boolean? = null
+    val admin: Boolean? = null,
 ) {
     val permission: Permission
         get() {

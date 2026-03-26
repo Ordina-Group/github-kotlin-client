@@ -9,5 +9,5 @@ data class GitHubRepositoryCodeOfConduct(
     val name: String,
     val url: String,
     val body: String,
-    @SerialName("html_url") val htmlUrl: String?
+    @SerialName("html_url") val htmlUrl: String?,
 )

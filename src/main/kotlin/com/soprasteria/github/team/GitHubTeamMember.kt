@@ -26,5 +26,5 @@ data class GitHubTeamMember internal constructor(
     @SerialName("received_events_url") val receivedEventsUrl: String,
     val type: String,
     @SerialName("site_admin") val siteAdmin: Boolean,
-    @SerialName("starred_at") val starredAt: String? = null
+    @SerialName("starred_at") val starredAt: String? = null,
 )

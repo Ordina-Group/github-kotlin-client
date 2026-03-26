@@ -6,7 +6,9 @@ import org.http4k.core.Uri
 import org.http4k.core.then
 import org.http4k.filter.ClientFilters
 
-class GitHubClient internal constructor(httpClient: HttpHandler) {
+class GitHubClient internal constructor(
+    httpClient: HttpHandler,
+) {
     val organizations = OrganizationService(httpClient)
     val repositories = RepositoryService(httpClient)
     val teams = TeamService(httpClient)
@@ -18,11 +20,15 @@ class GitHubClient internal constructor(httpClient: HttpHandler) {
          * @param token   The GitHub token used for authentication
          * @param baseUrl The base url of the GitHub API; defaults to the Cloud GitHub API
          */
-        fun create(token: String, baseUrl: String = "https://api.github.com"): GitHubClient {
-            val httpClient: HttpHandler = ClientFilters
-                .SetBaseUriFrom(Uri.of(baseUrl))
-                .then(ClientFilters.BearerAuth(token))
-                .then(ApacheClient())
+        fun create(
+            token: String,
+            baseUrl: String = "https://api.github.com",
+        ): GitHubClient {
+            val httpClient: HttpHandler =
+                ClientFilters
+                    .SetBaseUriFrom(Uri.of(baseUrl))
+                    .then(ClientFilters.BearerAuth(token))
+                    .then(ApacheClient())
 
             return GitHubClient(httpClient)
         }

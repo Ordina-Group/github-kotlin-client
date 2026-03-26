@@ -16,5 +16,5 @@ data class GitHubOrganizationInvite(
     @SerialName("team_count") val teamCount: Int,
     @SerialName("node_id") val nodeId: String,
     @SerialName("invitation_teams_url") val invitationTeamsUrl: String,
-    @SerialName("invitation_source") val invitationSource: String? = null
+    @SerialName("invitation_source") val invitationSource: String? = null,
 )

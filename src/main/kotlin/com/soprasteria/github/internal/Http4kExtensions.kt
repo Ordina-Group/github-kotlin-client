@@ -19,7 +19,7 @@ object GetRequest {
 object ListRequest {
     inline operator fun <reified Output : Any> invoke(
         uri: String,
-        noinline transform: (Request) -> Request
+        noinline transform: (Request) -> Request,
     ): (HttpHandler) -> List<Output> {
         val lens = getLens<List<Output>>()
         val request = GetRequest(uri).with(transform)
@@ -29,43 +29,58 @@ object ListRequest {
 }
 
 object PostRequest {
-    inline operator fun <reified T : Any> invoke(uri: String, body: T): Request =
-        Request(Method.POST, uri).with(getLens<T>() of body)
+    inline operator fun <reified T : Any> invoke(
+        uri: String,
+        body: T,
+    ): Request = Request(Method.POST, uri).with(getLens<T>() of body)
 }
 
 object PutRequest {
-    inline operator fun <reified T : Any> invoke(uri: String, body: T? = null): Request {
-        return if (body != null) {
+    inline operator fun <reified T : Any> invoke(
+        uri: String,
+        body: T? = null,
+    ): Request =
+        if (body != null) {
             Request(Method.PUT, uri).with(getLens<T>() of body)
         } else {
             Request(Method.PUT, uri)
         }
-    }
 }
 
 object PatchRequest {
-    inline operator fun <reified T : Any> invoke(uri: String, body: T): Request =
-        Request(Method.PATCH, uri).with(getLens<T>() of body)
+    inline operator fun <reified T : Any> invoke(
+        uri: String,
+        body: T,
+    ): Request = Request(Method.PATCH, uri).with(getLens<T>() of body)
 }
 
 object DeleteRequest {
-    inline operator fun <reified T : Any> invoke(uri: String, body: T? = null): Request {
-        return if (body != null) {
+    inline operator fun <reified T : Any> invoke(
+        uri: String,
+        body: T? = null,
+    ): Request =
+        if (body != null) {
             Request(Method.DELETE, uri).with(getLens<T>() of body)
         } else {
             Request(Method.DELETE, uri)
         }
-    }
 }
 
 private const val PAGE_SIZE = 100
 private val logger = LoggerFactory.getLogger(PaginatedRequest::class.java)
 
-class PaginatedRequest<T : Any>(private val baseRequest: Request, private val lens: BiDiBodyLens<List<T>>) {
-    private fun getPage(handler: HttpHandler, page: Int = 1): List<T> {
-        val requestWithPage = baseRequest
-            .query("page", page.toString())
-            .query("per_page", PAGE_SIZE.toString())
+class PaginatedRequest<T : Any>(
+    private val baseRequest: Request,
+    private val lens: BiDiBodyLens<List<T>>,
+) {
+    private fun getPage(
+        handler: HttpHandler,
+        page: Int = 1,
+    ): List<T> {
+        val requestWithPage =
+            baseRequest
+                .query("page", page.toString())
+                .query("per_page", PAGE_SIZE.toString())
 
         logger.debug("Fetching page {} of {}", page, baseRequest.uri)
 
@@ -74,7 +89,13 @@ class PaginatedRequest<T : Any>(private val baseRequest: Request, private val le
         return when (response.status) {
             Status.OK -> {
                 val hasNext = Header.LINK(response).containsKey("next")
-                logger.debug("Page {} of {} returned {} items, hasNext={}", page, baseRequest.uri, response.bodyString().length, hasNext)
+                logger.debug(
+                    "Page {} of {} returned {} items, hasNext={}",
+                    page,
+                    baseRequest.uri,
+                    response.bodyString().length,
+                    hasNext,
+                )
 
                 if (hasNext) {
                     lens(response) + getPage(handler, page + 1)

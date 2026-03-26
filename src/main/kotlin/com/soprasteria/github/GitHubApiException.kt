@@ -11,13 +11,16 @@ import org.http4k.core.Status
  */
 class GitHubApiException(
     val status: Status,
-    message: String
+    message: String,
 ) : RuntimeException(message) {
     companion object {
-        fun from(response: Response, context: String): GitHubApiException =
+        fun from(
+            response: Response,
+            context: String,
+        ): GitHubApiException =
             GitHubApiException(
                 status = response.status,
-                message = "GitHub API error during $context: HTTP ${response.status.code} ${response.status.description}"
+                message = "GitHub API error during $context: HTTP ${response.status.code} ${response.status.description}",
             )
     }
 }

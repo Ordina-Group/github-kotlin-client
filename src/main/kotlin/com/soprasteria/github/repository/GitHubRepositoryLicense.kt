@@ -9,5 +9,5 @@ data class GitHubRepositoryLicense(
     val name: String,
     @SerialName("spdx_id") val spdxId: String,
     val url: String? = null,
-    @SerialName("node_id") val nodeId: String
+    @SerialName("node_id") val nodeId: String,
 )

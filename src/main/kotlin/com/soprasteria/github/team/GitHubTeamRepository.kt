@@ -1,8 +1,12 @@
 package com.soprasteria.github.team
 
+import com.soprasteria.github.repository.GitHubRepositoryCodeOfConduct
+import com.soprasteria.github.repository.GitHubRepositoryLicense
+import com.soprasteria.github.repository.GitHubRepositoryOwner
+import com.soprasteria.github.repository.GitHubRepositoryPermissions
+import com.soprasteria.github.repository.GitHubRepositorySecurityAndAnalysis
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import com.soprasteria.github.repository.*
 
 @Serializable
 data class GitHubTeamRepository(
@@ -92,5 +96,5 @@ data class GitHubTeamRepository(
     val watchers: Int? = null,
     @SerialName("allow_forking") val allowForking: Boolean? = null,
     @SerialName("web_commit_signoff_required") val webCommitSignoffRequired: Boolean? = null,
-    @SerialName("security_and_analysis") val securityAndAnalysis: GitHubRepositorySecurityAndAnalysis? = null
+    @SerialName("security_and_analysis") val securityAndAnalysis: GitHubRepositorySecurityAndAnalysis? = null,
 )

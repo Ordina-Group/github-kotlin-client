@@ -17,5 +17,5 @@ data class GitHubTeamParent(
     @SerialName("html_url") val htmlUrl: String,
     @SerialName("repositories_url") val repositoriesUrl: String,
     val slug: String,
-    @SerialName("ldap_dn") val ldapDn: String? = null
+    @SerialName("ldap_dn") val ldapDn: String? = null,
 )

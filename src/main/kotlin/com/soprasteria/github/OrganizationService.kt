@@ -1,7 +1,5 @@
 package com.soprasteria.github
 
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import com.soprasteria.github.internal.GitHubOrganizationClient
 import com.soprasteria.github.internal.GitHubRepositoryClient
 import com.soprasteria.github.organization.GitHubOrganization
@@ -10,38 +8,49 @@ import com.soprasteria.github.organization.GitHubOrganizationMember
 import com.soprasteria.github.repository.GitHubRepository
 import com.soprasteria.github.team.GitHubTeam
 import com.soprasteria.github.team.TeamPrivacy
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.http4k.core.HttpHandler
 
 /**
  * Operations on GitHub organizations.
  * Obtain via [GitHubClient.organizations].
  */
-class OrganizationService internal constructor(httpClient: HttpHandler) {
+class OrganizationService internal constructor(
+    httpClient: HttpHandler,
+) {
     private val orgClient = GitHubOrganizationClient(httpClient)
     private val repoClient = GitHubRepositoryClient(httpClient)
 
     /** Fetches a single organization. Returns [ApiResult.NotFound] for HTTP 404. */
-    suspend fun get(name: String): ApiResult<GitHubOrganization> = withContext(Dispatchers.IO) {
-        apiResult { orgClient.getOrganization(name) }
-    }
+    suspend fun get(name: String): ApiResult<GitHubOrganization> =
+        withContext(Dispatchers.IO) {
+            apiResult { orgClient.getOrganization(name) }
+        }
 
     /** Lists all teams in an organization. */
-    suspend fun getTeams(organizationName: String): ApiResult<List<GitHubTeam>> = withContext(Dispatchers.IO) {
-        apiListResult { orgClient.getTeams(organizationName) }
-    }
+    suspend fun getTeams(organizationName: String): ApiResult<List<GitHubTeam>> =
+        withContext(Dispatchers.IO) {
+            apiListResult { orgClient.getTeams(organizationName) }
+        }
 
     /** @see getTeams */
     suspend fun getTeams(org: GitHubOrganization): ApiResult<List<GitHubTeam>> = getTeams(org.login)
 
     /** Fetches a single team by slug. Returns [ApiResult.NotFound] for HTTP 404. */
-    suspend fun getTeam(organizationName: String, teamSlug: String): ApiResult<GitHubTeam> =
+    suspend fun getTeam(
+        organizationName: String,
+        teamSlug: String,
+    ): ApiResult<GitHubTeam> =
         withContext(Dispatchers.IO) {
             apiResult { orgClient.getTeam(organizationName, teamSlug) }
         }
 
     /** @see getTeam */
-    suspend fun getTeam(org: GitHubOrganization, teamSlug: String): ApiResult<GitHubTeam> =
-        getTeam(org.login, teamSlug)
+    suspend fun getTeam(
+        org: GitHubOrganization,
+        teamSlug: String,
+    ): ApiResult<GitHubTeam> = getTeam(org.login, teamSlug)
 
     /** Creates a new team in an organization. */
     suspend fun createTeam(
@@ -49,11 +58,15 @@ class OrganizationService internal constructor(httpClient: HttpHandler) {
         teamName: String,
         description: String? = null,
         privacy: TeamPrivacy = TeamPrivacy.Secret,
-        parentTeamId: Int? = null
-    ): ApiResult<GitHubTeam> = withContext(Dispatchers.IO) {
-        apiListResult { listOf(orgClient.createTeam(organizationName, teamName, description, privacy, parentTeamId)) }
-            .map { it.first() }
-    }
+        parentTeamId: Int? = null,
+    ): ApiResult<GitHubTeam> =
+        withContext(Dispatchers.IO) {
+            apiListResult {
+                listOf(
+                    orgClient.createTeam(organizationName, teamName, description, privacy, parentTeamId),
+                )
+            }.map { it.first() }
+        }
 
     /** @see createTeam */
     suspend fun createTeam(
@@ -61,7 +74,7 @@ class OrganizationService internal constructor(httpClient: HttpHandler) {
         teamName: String,
         description: String? = null,
         privacy: TeamPrivacy = TeamPrivacy.Secret,
-        parentTeamId: Int? = null
+        parentTeamId: Int? = null,
     ): ApiResult<GitHubTeam> = createTeam(org.login, teamName, description, privacy, parentTeamId)
 
     /** Lists all repositories for an organization. */
@@ -71,8 +84,7 @@ class OrganizationService internal constructor(httpClient: HttpHandler) {
         }
 
     /** @see getRepositories */
-    suspend fun getRepositories(org: GitHubOrganization): ApiResult<List<GitHubRepository>> =
-        getRepositories(org.login)
+    suspend fun getRepositories(org: GitHubOrganization): ApiResult<List<GitHubRepository>> = getRepositories(org.login)
 
     /** Lists all members of an organization. */
     suspend fun getMembers(organizationName: String): ApiResult<List<GitHubOrganizationMember>> =
@@ -81,18 +93,22 @@ class OrganizationService internal constructor(httpClient: HttpHandler) {
         }
 
     /** @see getMembers */
-    suspend fun getMembers(org: GitHubOrganization): ApiResult<List<GitHubOrganizationMember>> =
-        getMembers(org.login)
+    suspend fun getMembers(org: GitHubOrganization): ApiResult<List<GitHubOrganizationMember>> = getMembers(org.login)
 
     /** Invites a user (by GitHub user ID) to an organization. */
-    suspend fun invite(organizationName: String, inviteeId: Int): ApiResult<GitHubOrganizationInvite> =
+    suspend fun invite(
+        organizationName: String,
+        inviteeId: Int,
+    ): ApiResult<GitHubOrganizationInvite> =
         withContext(Dispatchers.IO) {
             apiResult { orgClient.invite(organizationName, inviteeId) }
         }
 
     /** @see invite */
-    suspend fun invite(org: GitHubOrganization, inviteeId: Int): ApiResult<GitHubOrganizationInvite> =
-        invite(org.login, inviteeId)
+    suspend fun invite(
+        org: GitHubOrganization,
+        inviteeId: Int,
+    ): ApiResult<GitHubOrganizationInvite> = invite(org.login, inviteeId)
 }
 
 /** Converts a nullable-returning block into an [ApiResult], catching [GitHubApiException]. */
@@ -112,8 +128,9 @@ internal inline fun <T : Any> apiListResult(block: () -> List<T>): ApiResult<Lis
     }
 
 /** Maps the [ApiResult.Found] value using [transform], passing through [ApiResult.NotFound] and [ApiResult.Failure]. */
-internal fun <T : Any, R : Any> ApiResult<List<T>>.map(transform: (List<T>) -> R): ApiResult<R> = when (this) {
-    is ApiResult.Found -> ApiResult.Found(transform(value))
-    is ApiResult.NotFound -> ApiResult.NotFound
-    is ApiResult.Failure -> ApiResult.Failure(exception)
-}
+internal fun <T : Any, R : Any> ApiResult<List<T>>.map(transform: (List<T>) -> R): ApiResult<R> =
+    when (this) {
+        is ApiResult.Found -> ApiResult.Found(transform(value))
+        is ApiResult.NotFound -> ApiResult.NotFound
+        is ApiResult.Failure -> ApiResult.Failure(exception)
+    }

@@ -5,11 +5,13 @@ import kotlinx.serialization.Serializable
 @Serializable
 enum class Status {
     Enabled,
-    Disabled
+    Disabled,
 }
 
 @Serializable
-data class SecuritySetting(val status: Status) {
+data class SecuritySetting(
+    val status: Status,
+) {
     val isEnabled: Boolean = status == Status.Enabled
     val isDisabled: Boolean = status == Status.Disabled
 }
@@ -18,5 +20,5 @@ data class SecuritySetting(val status: Status) {
 data class GitHubRepositorySecurityAndAnalysis(
     val advanced_security: SecuritySetting,
     val secret_scanning: SecuritySetting,
-    val secret_scanning_push_protection: SecuritySetting
+    val secret_scanning_push_protection: SecuritySetting,
 )

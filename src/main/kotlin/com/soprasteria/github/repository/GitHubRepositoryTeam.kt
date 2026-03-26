@@ -18,5 +18,5 @@ data class GitHubRepositoryTeam(
     val permission: String,
     @SerialName("members_url") val membersUrl: String,
     @SerialName("repositories_url") val repositoriesUrl: String,
-    val parent: GitHubRepositoryTeam? = null
+    val parent: GitHubRepositoryTeam? = null,
 )

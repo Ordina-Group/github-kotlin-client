@@ -1,21 +1,26 @@
 package com.soprasteria.github.internal
 
-import kotlinx.serialization.SerialName
-import kotlinx.serialization.Serializable
 import com.soprasteria.github.GitHubApiException
 import com.soprasteria.github.repository.GitHubRepository
 import com.soprasteria.github.repository.GitHubRepositoryCollaborator
 import com.soprasteria.github.repository.GitHubRepositoryTeam
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 import org.http4k.core.Body
 import org.http4k.core.HttpHandler
 import org.http4k.core.Status
 import org.http4k.format.KotlinxSerialization.auto
 import org.slf4j.LoggerFactory
 
-internal class GitHubRepositoryClient(private val client: HttpHandler) {
+internal class GitHubRepositoryClient(
+    private val client: HttpHandler,
+) {
     private val logger = LoggerFactory.getLogger(GitHubRepositoryClient::class.java)
 
-    fun getRepository(owner: String, repositoryName: String): GitHubRepository? {
+    fun getRepository(
+        owner: String,
+        repositoryName: String,
+    ): GitHubRepository? {
         logger.debug("Fetching repository '{}/{}'", owner, repositoryName)
         val lens = Body.auto<GetRepositoryResponse>().toLens()
         val request = GetRequest(GitHubApiEndpoints.repository(owner, repositoryName))
@@ -34,7 +39,10 @@ internal class GitHubRepositoryClient(private val client: HttpHandler) {
         }
     }
 
-    fun getTeams(owner: String, repositoryName: String): List<GitHubRepositoryTeam> {
+    fun getTeams(
+        owner: String,
+        repositoryName: String,
+    ): List<GitHubRepositoryTeam> {
         val lens = Body.auto<List<GetTeamResponse>>().toLens()
         val request = GetRequest(GitHubApiEndpoints.repositoryTeams(owner, repositoryName))
         val response = client(request)
@@ -48,13 +56,14 @@ internal class GitHubRepositoryClient(private val client: HttpHandler) {
     fun getCollaborators(
         owner: String,
         repositoryName: String,
-        affiliation: Affiliation
+        affiliation: Affiliation,
     ): List<GitHubRepositoryCollaborator> {
-        val request = ListRequest<GitHubRepositoryCollaborator>(
-            GitHubApiEndpoints.repositoryCollaborators(owner, repositoryName)
-        ) {
-            it.query("affiliation", affiliation.value)
-        }
+        val request =
+            ListRequest<GitHubRepositoryCollaborator>(
+                GitHubApiEndpoints.repositoryCollaborators(owner, repositoryName),
+            ) {
+                it.query("affiliation", affiliation.value)
+            }
         return request(client)
     }
 
@@ -63,12 +72,13 @@ internal class GitHubRepositoryClient(private val client: HttpHandler) {
         currentRepositoryName: String,
         newOwner: String,
         teamIds: List<Int> = emptyList(),
-        newRepositoryName: String? = null
+        newRepositoryName: String? = null,
     ) {
-        val request = PostRequest(
-            GitHubApiEndpoints.repositoryTransfer(currentOwner, currentRepositoryName),
-            TransferRepositoryRequest(newOwner, teamIds, newRepositoryName)
-        )
+        val request =
+            PostRequest(
+                GitHubApiEndpoints.repositoryTransfer(currentOwner, currentRepositoryName),
+                TransferRepositoryRequest(newOwner, teamIds, newRepositoryName),
+            )
         client(request)
     }
 
@@ -76,21 +86,22 @@ internal class GitHubRepositoryClient(private val client: HttpHandler) {
     data class TransferRepositoryRequest(
         @SerialName("new_owner") val newOwner: String,
         @SerialName("team_ids") val teamIds: List<Int>,
-        @SerialName("new_name") val newName: String?
+        @SerialName("new_name") val newName: String?,
     )
 
     @Serializable
     data class GetRepositoryResponse(
         val id: Int,
         val name: String,
-        @SerialName("full_name") val fullName: String
+        @SerialName("full_name") val fullName: String,
     ) {
-        fun toRepository(owner: String) = GitHubRepository(
-            owner = owner,
-            id = id,
-            name = name,
-            fullName = fullName
-        )
+        fun toRepository(owner: String) =
+            GitHubRepository(
+                owner = owner,
+                id = id,
+                name = name,
+                fullName = fullName,
+            )
     }
 
     @Serializable
@@ -106,28 +117,31 @@ internal class GitHubRepositoryClient(private val client: HttpHandler) {
         @SerialName("notification_setting") val notificationSetting: String,
         val permission: String,
         @SerialName("members_url") val membersUrl: String,
-        @SerialName("repositories_url") val repositoriesUrl: String
+        @SerialName("repositories_url") val repositoriesUrl: String,
     ) {
-        fun toRepositoryTeam(organization: String) = GitHubRepositoryTeam(
-            organization = organization,
-            id = id,
-            nodeId = nodeId,
-            url = url,
-            htmlUrl = htmlUrl,
-            name = name,
-            slug = slug,
-            description = description,
-            privacy = privacy,
-            notificationSetting = notificationSetting,
-            permission = permission,
-            membersUrl = membersUrl,
-            repositoriesUrl = repositoriesUrl
-        )
+        fun toRepositoryTeam(organization: String) =
+            GitHubRepositoryTeam(
+                organization = organization,
+                id = id,
+                nodeId = nodeId,
+                url = url,
+                htmlUrl = htmlUrl,
+                name = name,
+                slug = slug,
+                description = description,
+                privacy = privacy,
+                notificationSetting = notificationSetting,
+                permission = permission,
+                membersUrl = membersUrl,
+                repositoriesUrl = repositoriesUrl,
+            )
     }
 
-    enum class Affiliation(val value: String) {
+    enum class Affiliation(
+        val value: String,
+    ) {
         ALL("all"),
         DIRECT("direct"),
-        OUTSIDE("outside")
+        OUTSIDE("outside"),
     }
 }

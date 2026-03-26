@@ -9,5 +9,5 @@ data class GitHubOrganization(
     val id: Int,
     @SerialName("node_id") val nodeId: String,
     val name: String? = null,
-    val company: String? = null
+    val company: String? = null,
 )

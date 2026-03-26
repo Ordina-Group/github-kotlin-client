@@ -25,5 +25,5 @@ data class GitHubRepositoryCollaborator internal constructor(
     val type: String,
     @SerialName("site_admin") val siteAdmin: Boolean,
     val permissions: GitHubRepositoryPermissions,
-    @SerialName("role_name") val roleName: String
+    @SerialName("role_name") val roleName: String,
 )

@@ -8,5 +8,5 @@ data class GitHubRepository(
     val owner: String,
     val id: Int,
     val name: String,
-    @SerialName("full_name") val fullName: String
+    @SerialName("full_name") val fullName: String,
 )

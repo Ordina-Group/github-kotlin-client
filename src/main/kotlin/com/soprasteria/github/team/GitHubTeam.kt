@@ -1,8 +1,8 @@
 package com.soprasteria.github.team
 
+import com.soprasteria.github.repository.GitHubRepositoryPermissions
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import com.soprasteria.github.repository.GitHubRepositoryPermissions
 
 @Serializable
 data class GitHubTeam(
@@ -20,5 +20,5 @@ data class GitHubTeam(
     @SerialName("html_url") val htmlUrl: String,
     @SerialName("members_url") val membersUrl: String,
     @SerialName("repositories_url") val repositoriesUrl: String,
-    val parent: GitHubTeamParent?
+    val parent: GitHubTeamParent?,
 )
