@@ -40,7 +40,7 @@ jobs:
         shell: bash
         run: |
           VERSION=$(./gradlew --console=plain -q currentVersion | awk '{print $NF}')
-          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+          echo VERSION="$VERSION" >> $GITHUB_OUTPUT
 
   release:
     needs: [ precheck ]
