@@ -7,7 +7,7 @@ plugins {
     kotlin("plugin.serialization") version "2.2.0"
     id("org.jlleitschuh.gradle.ktlint") version "14.2.0"
     id("org.jreleaser") version "1.7.0"
-    id("com.karmanno.plugins.semver") version "2.0.0"
+    id("pl.allegro.tech.build.axion-release") version "1.18.13"
     id("org.jetbrains.dokka") version "2.0.0"
     `java-library`
     `maven-publish`
@@ -15,6 +15,7 @@ plugins {
 }
 
 group = "com.soprasteria"
+version = scmVersion.version
 
 val http4kVersion = "6.15.1.0"
 val kotestVersion = "5.9.1"

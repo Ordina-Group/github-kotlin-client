@@ -39,7 +39,7 @@ jobs:
         id: vars
         shell: bash
         run: |
-          VERSION=$(./gradlew --console=plain -q printVersion)
+          VERSION=$(./gradlew --console=plain -q currentVersion)
           echo "VERSION=$(echo $VERSION)" >> $GITHUB_OUTPUT
 
   release:

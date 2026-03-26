@@ -33,7 +33,7 @@ jobs:
           if [ -n "${{ github.event.inputs.version }}" ]; then
             VERSION="${{ github.event.inputs.version }}"
           else
-            VERSION=$(./gradlew --console=plain -q printVersion | sed 's/-SNAPSHOT//')
+            VERSION=$(./gradlew --console=plain -q currentVersion | sed 's/-SNAPSHOT//')
           fi
           echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
 
@@ -50,7 +50,7 @@ jobs:
           GITHUB_USERNAME: ${{ github.actor }}
 
       - name: Release
-        run: ./gradlew -Pversion=${{ github.event.inputs.version }} jreleaserFullRelease
+        run: ./gradlew -Pversion=${{ steps.version.outputs.VERSION }} jreleaserFullRelease
         env:
           JRELEASER_GITHUB_TOKEN: ${{ secrets.GH_PAT_TOKEN }}
 
