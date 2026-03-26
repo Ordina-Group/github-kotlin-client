@@ -65,19 +65,13 @@ jobs:
         run: ./gradlew build
 
       - name: Assemble
-        uses: jreleaser/release-action@v2
-        with:
-          arguments: assemble
+        run: ./gradlew -Pversion=${{ needs.precheck.outputs.VERSION }} jreleaserAssemble
         env:
-          JRELEASER_PROJECT_VERSION: ${{ needs.precheck.outputs.VERSION }}
           JRELEASER_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Release
-        uses: jreleaser/release-action@v2
-        with:
-          arguments: full-release
+        run: ./gradlew -Pversion=${{ needs.precheck.outputs.VERSION }} jreleaserFullRelease
         env:
-          JRELEASER_PROJECT_VERSION: ${{ needs.precheck.outputs.VERSION }}
           JRELEASER_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: JReleaser output
