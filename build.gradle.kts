@@ -63,7 +63,7 @@ jreleaser {
                 preset.set("conventional-commits")
                 contributors {
                     format.set(
-                        "- {{contributorName}}{{#contributorUsernameAsLink}} ({{.}}){{/contributorUsernameAsLink}}"
+                        "- {{contributorName}}{{#contributorUsernameAsLink}} ({{.}}){{/contributorUsernameAsLink}}",
                     )
                 }
             }

@@ -11,6 +11,3 @@ tab_width = 4
 
 [*.yaml]
 indent_size = 2
-
-[*.kt]
-ktlint_disabled_rules=no-wildcard-imports
