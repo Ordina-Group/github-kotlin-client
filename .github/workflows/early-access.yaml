@@ -39,8 +39,8 @@ jobs:
         id: vars
         shell: bash
         run: |
-          VERSION=$(./gradlew --console=plain -q currentVersion | awk '{print $NF}')
-          echo VERSION="$VERSION" >> $GITHUB_OUTPUT
+          VERSION=$(./gradlew --console=plain -q currentVersion | awk '{print $NF}' | tr -d '[:space:]')
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
 
   release:
     needs: [ precheck ]

@@ -33,7 +33,7 @@ jobs:
           if [ -n "${{ github.event.inputs.version }}" ]; then
             VERSION="${{ github.event.inputs.version }}"
           else
-            VERSION=$(./gradlew --console=plain -q currentVersion | awk '{print $NF}' | sed 's/-SNAPSHOT//')
+            VERSION=$(./gradlew --console=plain -q currentVersion | awk '{print $NF}' | tr -d '[:space:]' | sed 's/-SNAPSHOT//')
           fi
           echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
 
