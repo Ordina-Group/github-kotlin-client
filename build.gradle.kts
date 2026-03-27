@@ -36,7 +36,7 @@ publishing {
     repositories {
         maven {
             name = "GitHubPackages"
-            url = uri("https://maven.pkg.github.com/soprasteria/github-kotlin-client")
+            url = uri("https://maven.pkg.github.com/Ordina-Group/github-kotlin-client")
             credentials {
                 username = project.findProperty("gpr.user") as String? ?: System.getenv("GITHUB_USERNAME")
                 password = project.findProperty("gpr.key") as String? ?: System.getenv("GITHUB_TOKEN")
