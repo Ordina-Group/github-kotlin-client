@@ -70,12 +70,12 @@ jobs:
       - name: Assemble
         run: ./gradlew -Pversion=${{ needs.precheck.outputs.VERSION }} jreleaserAssemble
         env:
-          JRELEASER_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          JRELEASER_GITHUB_TOKEN: ${{ secrets.GH_PAT_TOKEN }}
 
       - name: Release
         run: ./gradlew -Pversion=${{ needs.precheck.outputs.VERSION }} jreleaserFullRelease
         env:
-          JRELEASER_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          JRELEASER_GITHUB_TOKEN: ${{ secrets.GH_PAT_TOKEN }}
 
       - name: JReleaser output
         if: always()
