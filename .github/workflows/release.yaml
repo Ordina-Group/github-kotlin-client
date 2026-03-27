@@ -41,7 +41,7 @@ jobs:
         uses: gradle/actions/setup-gradle@v5
 
       - name: Build
-        run: ./gradlew -Pversion=${{ steps.version.outputs.VERSION  }} build
+        run: ./gradlew -Pversion=${{ steps.version.outputs.VERSION }} build
 
       - name: Publish
         run: ./gradlew -Pversion=${{ steps.version.outputs.VERSION }} publish
