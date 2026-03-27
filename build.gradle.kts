@@ -15,7 +15,7 @@ plugins {
 }
 
 group = "com.soprasteria"
-version = scmVersion.version
+version = (findProperty("version") as String?)?.takeIf { it != "unspecified" } ?: scmVersion.version
 
 val http4kVersion = "6.15.1.0"
 val kotestVersion = "5.9.1"
