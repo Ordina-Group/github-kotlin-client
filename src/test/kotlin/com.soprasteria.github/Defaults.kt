@@ -2,6 +2,7 @@ package com.soprasteria.github
 
 import com.soprasteria.github.organization.GitHubOrganization
 import com.soprasteria.github.repository.GitHubRepository
+import com.soprasteria.github.repository.GitHubRepositoryContributor
 import com.soprasteria.github.team.GitHubTeam
 import com.soprasteria.github.team.GitHubTeamMember
 
@@ -24,6 +25,32 @@ object Defaults {
             name = "Mona-Liza",
             fullName = "github/Mona-Liza",
         )
+
+    fun contributor(
+        login: String = "octocat",
+        id: Int = 1,
+        contributions: Int = 42,
+    ) = GitHubRepositoryContributor(
+        login = login,
+        id = id,
+        nodeId = "MDQ6VXNlcjE=",
+        avatarUrl = "https://github.com/images/error/$login.gif",
+        gravatarId = null,
+        url = "https://api.github.com/users/$login",
+        htmlUrl = "https://github.com/$login",
+        followersUrl = "https://api.github.com/users/$login/followers",
+        followingUrl = "https://api.github.com/users/$login/following{/other_user}",
+        gistsUrl = "https://api.github.com/users/$login/gists{/gist_id}",
+        starredUrl = "https://api.github.com/users/$login/starred{/owner}{/repo}",
+        subscriptionsUrl = "https://api.github.com/users/$login/subscriptions",
+        organizationsUrl = "https://api.github.com/users/$login/orgs",
+        reposUrl = "https://api.github.com/users/$login/repos",
+        eventsUrl = "https://api.github.com/users/$login/events{/privacy}",
+        receivedEventsUrl = "https://api.github.com/users/$login/received_events",
+        type = "User",
+        siteAdmin = false,
+        contributions = contributions,
+    )
 
     fun team() =
         GitHubTeam(

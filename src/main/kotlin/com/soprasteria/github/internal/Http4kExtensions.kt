@@ -5,6 +5,7 @@ import org.http4k.core.Body
 import org.http4k.core.HttpHandler
 import org.http4k.core.Method
 import org.http4k.core.Request
+import org.http4k.core.Response
 import org.http4k.core.Status
 import org.http4k.core.with
 import org.http4k.format.KotlinxSerialization.auto
@@ -69,10 +70,24 @@ object DeleteRequest {
 private const val PAGE_SIZE = 100
 private val logger = LoggerFactory.getLogger(PaginatedRequest::class.java)
 
+data class PaginatedPage<T : Any>(
+    val items: List<T>,
+    val hasNext: Boolean,
+)
+
 class PaginatedRequest<T : Any>(
     private val baseRequest: Request,
     private val lens: BiDiBodyLens<List<T>>,
+    pageResult: ((Response, Int) -> PaginatedPage<T>)? = null,
 ) {
+    private val getPageResult = pageResult ?: { response: Response, _: Int -> defaultPageResult(response) }
+
+    private fun defaultPageResult(response: Response): PaginatedPage<T> =
+        when (response.status) {
+            Status.OK -> PaginatedPage(lens(response), Header.LINK(response).containsKey("next"))
+            else -> throw GitHubApiException.from(response, baseRequest.uri.toString())
+        }
+
     private fun getPage(
         handler: HttpHandler,
         page: Int = 1,
@@ -83,28 +98,21 @@ class PaginatedRequest<T : Any>(
                 .query("per_page", PAGE_SIZE.toString())
 
         logger.debug("Fetching page {} of {}", page, baseRequest.uri)
-
         val response = handler(requestWithPage)
+        val pageResult = getPageResult(response, page)
 
-        return when (response.status) {
-            Status.OK -> {
-                val hasNext = Header.LINK(response).containsKey("next")
-                logger.debug(
-                    "Page {} of {} returned {} items, hasNext={}",
-                    page,
-                    baseRequest.uri,
-                    response.bodyString().length,
-                    hasNext,
-                )
+        logger.debug(
+            "Page {} of {} returned {} items, hasNext={}",
+            page,
+            baseRequest.uri,
+            pageResult.items.size,
+            pageResult.hasNext,
+        )
 
-                if (hasNext) {
-                    lens(response) + getPage(handler, page + 1)
-                } else {
-                    lens(response)
-                }
-            }
-
-            else -> throw GitHubApiException.from(response, baseRequest.uri.toString())
+        return if (pageResult.hasNext) {
+            pageResult.items + getPage(handler, page + 1)
+        } else {
+            pageResult.items
         }
     }
 
