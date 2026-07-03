@@ -9,5 +9,14 @@ insert_final_newline = false
 max_line_length = 140
 tab_width = 4
 
+[src/main/kotlin/com/soprasteria/github/ApiResult.kt]
+insert_final_newline = true
+
+[src/main/kotlin/com/soprasteria/github/OrganizationService.kt]
+insert_final_newline = true
+
+[src/test/kotlin/com.soprasteria.github/ApiResultSpec.kt]
+insert_final_newline = true
+
 [*.yaml]
 indent_size = 2

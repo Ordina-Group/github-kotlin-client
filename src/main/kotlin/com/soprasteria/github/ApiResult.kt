@@ -34,7 +34,23 @@ sealed class ApiResult<out T> {
 
     fun isFound(): Boolean = this is Found
 
-    fun isNotFound(): Boolean = this == NotFound
+    fun isNotFound(): Boolean = this is NotFound
 
     fun isFailure(): Boolean = this is Failure
+
+    /** Maps the [Found] value using [transform], passing through [NotFound] and [Failure] unchanged. */
+    inline fun <R> map(transform: (T) -> R): ApiResult<R> =
+        when (this) {
+            is Found -> Found(transform(value))
+            is NotFound -> NotFound
+            is Failure -> Failure(exception)
+        }
+
+    /** Flat-maps the [Found] value using [transform], passing through [NotFound] and [Failure] unchanged. */
+    inline fun <R> flatMap(transform: (T) -> ApiResult<R>): ApiResult<R> =
+        when (this) {
+            is Found -> transform(value)
+            is NotFound -> NotFound
+            is Failure -> Failure(exception)
+        }
 }

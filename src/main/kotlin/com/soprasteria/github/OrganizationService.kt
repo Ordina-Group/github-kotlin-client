@@ -126,11 +126,3 @@ internal inline fun <T : Any> apiListResult(block: () -> List<T>): ApiResult<Lis
     } catch (e: GitHubApiException) {
         ApiResult.Failure(e)
     }
-
-/** Maps the [ApiResult.Found] value using [transform], passing through [ApiResult.NotFound] and [ApiResult.Failure]. */
-internal fun <T : Any, R : Any> ApiResult<List<T>>.map(transform: (List<T>) -> R): ApiResult<R> =
-    when (this) {
-        is ApiResult.Found -> ApiResult.Found(transform(value))
-        is ApiResult.NotFound -> ApiResult.NotFound
-        is ApiResult.Failure -> ApiResult.Failure(exception)
-    }
