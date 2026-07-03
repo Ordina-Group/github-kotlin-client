@@ -104,13 +104,13 @@ internal class GitHubRepositoryClient(
             Status.OK -> {
                 try {
                     val bodyString = response.bodyString()
-                    if (bodyString.isEmpty() || bodyString.isBlank()) {
+                    if (bodyString.isBlank()) {
                         logger.debug("Empty contributors list for '{}/{}'", owner, repositoryName)
                         emptyList()
                     } else {
                         lens(response)
                     }
-                } catch (e: Exception) {
+                } catch (e: kotlinx.serialization.SerializationException) {
                     logger.warn("Failed to parse contributors for '{}/{}': {}", owner, repositoryName, e.message)
                     emptyList()
                 }
@@ -123,14 +123,7 @@ internal class GitHubRepositoryClient(
                 logger.debug("Repository '{}/{}' not found or contributors disabled", owner, repositoryName)
                 emptyList()
             }
-            Status.FORBIDDEN -> {
-                logger.warn("Access forbidden to contributors for '{}/{}'", owner, repositoryName)
-                emptyList()
-            }
-            else -> {
-                logger.warn("Unexpected status {} for contributors of '{}/{}'", response.status, owner, repositoryName)
-                emptyList()
-            }
+            else -> throw GitHubApiException.from(response, "getContributors($owner, $repositoryName)")
         }
     }
 
@@ -160,7 +153,7 @@ internal class GitHubRepositoryClient(
                             } else {
                                 lens(response)
                             }
-                        } catch (e: Exception) {
+                        } catch (e: kotlinx.serialization.SerializationException) {
                             logger.warn(
                                 "Failed to parse contributors page {} for '{}/{}': {}",
                                 page,
