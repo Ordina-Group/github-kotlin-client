@@ -32,6 +32,15 @@ class ApiResultSpec :
                     ApiResult.Found("MAIN")
             }
 
+            "return NotFound when transform returns NotFound" {
+                ApiResult.Found("main").flatMap { ApiResult.NotFound } shouldBe ApiResult.NotFound
+            }
+
+            "return Failure when transform returns Failure" {
+                ApiResult.Found("main").flatMap { ApiResult.Failure(failure) } shouldBe
+                    ApiResult.Failure(failure)
+            }
+
             "pass through NotFound unchanged" {
                 ApiResult.NotFound.flatMap { value: String -> ApiResult.Found(value.uppercase()) } shouldBe
                     ApiResult.NotFound

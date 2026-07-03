@@ -89,7 +89,7 @@ val teamNames = client.organizations.getTeams("my-org")
     .map { teams -> teams.map { team -> team.name } }
 
 val team = client.organizations.getTeams("my-org")
-    .flatMap { teams -> teams.firstOrNull()?.let { ApiResult.Found(it) } ?: ApiResult.NotFound }
+    .flatMap { teams -> teams.firstOrNull()?.let(ApiResult::Found) ?: ApiResult.NotFound }
 ```
 
 List operations return `ApiResult<List<T>>` — `NotFound` is never returned for lists.
