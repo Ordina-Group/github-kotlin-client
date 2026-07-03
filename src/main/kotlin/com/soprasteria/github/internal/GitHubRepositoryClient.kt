@@ -74,13 +74,18 @@ internal class GitHubRepositoryClient(
         newOwner: String,
         teamIds: List<Int> = emptyList(),
         newRepositoryName: String? = null,
-    ) {
+    ): Unit? {
         val request =
             PostRequest(
                 GitHubApiEndpoints.repositoryTransfer(currentOwner, currentRepositoryName),
                 TransferRepositoryRequest(newOwner, teamIds, newRepositoryName),
             )
-        client(request)
+        val response = client(request)
+        return when (response.status) {
+            Status.ACCEPTED -> Unit
+            Status.NOT_FOUND -> null
+            else -> throw GitHubApiException.from(response, "transfer($currentOwner/$currentRepositoryName -> $newOwner)")
+        }
     }
 
     fun getContributors(

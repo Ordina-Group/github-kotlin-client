@@ -79,20 +79,21 @@ class RepositoryService internal constructor(
     suspend fun getOutsideCollaborators(repository: GitHubRepository): ApiResult<List<GitHubRepositoryCollaborator>> =
         getOutsideCollaborators(repository.owner, repository.name)
 
-    /** Transfers a repository to a new owner. */
+    /** Transfers a repository to a new owner. Returns [ApiResult.NotFound] if the repository does not exist. */
     suspend fun transfer(
         owner: String,
         repositoryName: String,
         newOwner: String,
-    ) = withContext(Dispatchers.IO) {
-        repoClient.transfer(owner, repositoryName, newOwner)
-    }
+    ): ApiResult<Unit> =
+        withContext(Dispatchers.IO) {
+            apiResult { repoClient.transfer(owner, repositoryName, newOwner) }
+        }
 
     /** @see transfer */
     suspend fun transfer(
         repository: GitHubRepository,
         newOwner: String,
-    ) = transfer(repository.owner, repository.name, newOwner)
+    ): ApiResult<Unit> = transfer(repository.owner, repository.name, newOwner)
 
     /** Lists top contributors to a repository (up to maxContributors, defaults to 5). */
     suspend fun getContributors(

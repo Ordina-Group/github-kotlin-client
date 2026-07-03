@@ -39,4 +39,36 @@ class GitHubRepositorySpec :
                 (result as ApiResult.Failure).exception.status shouldBe Status.INTERNAL_SERVER_ERROR
             }
         }
+
+        "repositories.transfer" should {
+
+            "return Found(Unit) when the transfer is accepted" {
+                every { httpClient.invoke(matchUri("/repos/${repo.owner}/${repo.name}/transfer")) }
+                    .returns(Response(Status.ACCEPTED).body("{}"))
+
+                val result = client.repositories.transfer(repo, newOwner = "new-org")
+
+                result.shouldBeInstanceOf<ApiResult.Found<Unit>>()
+                result.getOrThrow() shouldBe Unit
+            }
+
+            "return NotFound when the repository does not exist" {
+                every { httpClient.invoke(matchUri("/repos/${repo.owner}/${repo.name}/transfer")) }
+                    .returns(Response(Status.NOT_FOUND))
+
+                val result = client.repositories.transfer(repo, newOwner = "new-org")
+
+                result.shouldBeInstanceOf<ApiResult.NotFound>()
+            }
+
+            "return Failure when the API returns a server error" {
+                every { httpClient.invoke(matchUri("/repos/${repo.owner}/${repo.name}/transfer")) }
+                    .returns(Response(Status.INTERNAL_SERVER_ERROR))
+
+                val result = client.repositories.transfer(repo, newOwner = "new-org")
+
+                result.shouldBeInstanceOf<ApiResult.Failure>()
+                (result as ApiResult.Failure).exception.status shouldBe Status.INTERNAL_SERVER_ERROR
+            }
+        }
     })
