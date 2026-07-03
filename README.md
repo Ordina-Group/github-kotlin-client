@@ -16,7 +16,7 @@ The library is published to GitHub Packages.
 ```kotlin
 repositories {
     maven {
-        url = uri("https://maven.pkg.github.com/soprasteria/github-kotlin-client")
+        url = uri("https://maven.pkg.github.com/Ordina-Group/github-kotlin-client")
         credentials {
             username = System.getenv("GITHUB_USERNAME")
             password = System.getenv("GITHUB_TOKEN")
@@ -83,6 +83,13 @@ val org = client.organizations.get("my-org").getOrThrow()
 
 // Or get null on non-success:
 val org = client.organizations.get("my-org").getOrNull()
+
+// Or transform results without unwrapping them:
+val teamNames = client.organizations.getTeams("my-org")
+    .map { teams -> teams.map { team -> team.name } }
+
+val team = client.organizations.getTeams("my-org")
+    .flatMap { teams -> teams.firstOrNull()?.let { ApiResult.Found(it) } ?: ApiResult.NotFound }
 ```
 
 List operations return `ApiResult<List<T>>` — `NotFound` is never returned for lists.
