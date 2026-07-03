@@ -135,6 +135,9 @@ val all     = client.repositories.getAllCollaborators(repo).getOrThrow()
 val direct  = client.repositories.getDirectCollaborators(repo).getOrThrow()
 val outside = client.repositories.getOutsideCollaborators(repo).getOrThrow()
 
+// List contributors (top contributors by commit count)
+val contributors = client.repositories.getContributors(repo, maxContributors = 5).getOrThrow()
+
 // Transfer to another owner
 client.repositories.transfer(repo, newOwner = "new-org")
 ```

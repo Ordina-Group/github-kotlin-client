@@ -3,6 +3,7 @@ package com.soprasteria.github.internal
 import com.soprasteria.github.GitHubApiException
 import com.soprasteria.github.repository.GitHubRepository
 import com.soprasteria.github.repository.GitHubRepositoryCollaborator
+import com.soprasteria.github.repository.GitHubRepositoryContributor
 import com.soprasteria.github.repository.GitHubRepositoryTeam
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -73,13 +74,125 @@ internal class GitHubRepositoryClient(
         newOwner: String,
         teamIds: List<Int> = emptyList(),
         newRepositoryName: String? = null,
-    ) {
+    ): Unit? {
         val request =
             PostRequest(
                 GitHubApiEndpoints.repositoryTransfer(currentOwner, currentRepositoryName),
                 TransferRepositoryRequest(newOwner, teamIds, newRepositoryName),
             )
-        client(request)
+        val response = client(request)
+        return when (response.status) {
+            Status.ACCEPTED -> Unit
+            Status.NOT_FOUND -> null
+            else -> throw GitHubApiException.from(response, "transfer($currentOwner/$currentRepositoryName -> $newOwner)")
+        }
+    }
+
+    fun getContributors(
+        owner: String,
+        repositoryName: String,
+        maxContributors: Int = 5,
+    ): List<GitHubRepositoryContributor> {
+        logger.debug("Fetching contributors for '{}/{}'", owner, repositoryName)
+        val lens = Body.auto<List<GitHubRepositoryContributor>>().toLens()
+        val request =
+            GetRequest(GitHubApiEndpoints.repositoryContributors(owner, repositoryName))
+                .query("per_page", maxContributors.toString())
+        val response = client(request)
+
+        return when (response.status) {
+            Status.OK -> {
+                try {
+                    val bodyString = response.bodyString()
+                    if (bodyString.isBlank()) {
+                        logger.debug("Empty contributors list for '{}/{}'", owner, repositoryName)
+                        emptyList()
+                    } else {
+                        lens(response)
+                    }
+                } catch (e: kotlinx.serialization.SerializationException) {
+                    logger.warn("Failed to parse contributors for '{}/{}': {}", owner, repositoryName, e.message)
+                    emptyList()
+                }
+            }
+            Status.NO_CONTENT -> {
+                logger.debug("No contributors found for '{}/{}'", owner, repositoryName)
+                emptyList()
+            }
+            Status.NOT_FOUND -> {
+                logger.debug("Repository '{}/{}' not found or contributors disabled", owner, repositoryName)
+                emptyList()
+            }
+            else -> throw GitHubApiException.from(response, "getContributors($owner, $repositoryName)")
+        }
+    }
+
+    fun getAllContributors(
+        owner: String,
+        repositoryName: String,
+    ): List<GitHubRepositoryContributor> {
+        logger.debug("Fetching all contributors for '{}/{}'", owner, repositoryName)
+        val lens = Body.auto<List<GitHubRepositoryContributor>>().toLens()
+        val allContributors = mutableListOf<GitHubRepositoryContributor>()
+        var page = 1
+
+        while (true) {
+            val request =
+                GetRequest(GitHubApiEndpoints.repositoryContributors(owner, repositoryName))
+                    .query("per_page", "100")
+                    .query("page", page.toString())
+            val response = client(request)
+
+            val pageContributors =
+                when (response.status) {
+                    Status.OK -> {
+                        try {
+                            val bodyString = response.bodyString()
+                            if (bodyString.isBlank()) {
+                                emptyList()
+                            } else {
+                                lens(response)
+                            }
+                        } catch (e: kotlinx.serialization.SerializationException) {
+                            logger.warn(
+                                "Failed to parse contributors page {} for '{}/{}': {}",
+                                page,
+                                owner,
+                                repositoryName,
+                                e.message,
+                            )
+                            emptyList()
+                        }
+                    }
+                    Status.NO_CONTENT,
+                    Status.NOT_FOUND,
+                    Status.FORBIDDEN,
+                    -> emptyList()
+                    else -> {
+                        logger.warn(
+                            "Unexpected status {} for contributors page {} of '{}/{}'",
+                            response.status,
+                            page,
+                            owner,
+                            repositoryName,
+                        )
+                        emptyList()
+                    }
+                }
+
+            if (pageContributors.isEmpty()) {
+                break
+            }
+
+            allContributors += pageContributors
+
+            if (pageContributors.size < 100) {
+                break
+            }
+            page++
+        }
+
+        return allContributors
     }
 
     @Serializable
@@ -94,6 +207,8 @@ internal class GitHubRepositoryClient(
         val id: Int,
         val name: String,
         @SerialName("full_name") val fullName: String,
+        val visibility: String? = null,
+        @SerialName("pushed_at") val pushedAt: String? = null,
     ) {
         fun toRepository(owner: String) =
             GitHubRepository(
@@ -101,6 +216,8 @@ internal class GitHubRepositoryClient(
                 id = id,
                 name = name,
                 fullName = fullName,
+                visibility = visibility,
+                pushedAt = pushedAt,
             )
     }
 

@@ -71,4 +71,9 @@ internal object GitHubApiEndpoints {
         owner: String,
         repo: String,
     ) = "/repos/$owner/$repo/transfer"
+
+    fun repositoryContributors(
+        owner: String,
+        repo: String,
+    ) = "/repos/$owner/$repo/contributors"
 }

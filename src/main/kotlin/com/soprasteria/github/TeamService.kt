@@ -30,35 +30,37 @@ class TeamService internal constructor(
     /** @see getMembers */
     suspend fun getMembers(team: GitHubTeam): ApiResult<List<GitHubTeamMember>> = getMembers(team.organization, team.slug)
 
-    /** Adds a member to a team. */
+    /** Adds a member to a team. Returns [ApiResult.NotFound] if the team or org does not exist. */
     suspend fun addMember(
         organizationName: String,
         teamSlug: String,
         username: String,
-    ) = withContext(Dispatchers.IO) {
-        teamClient.addMember(organizationName, teamSlug, username)
-    }
+    ): ApiResult<Unit> =
+        withContext(Dispatchers.IO) {
+            apiResult { teamClient.addMember(organizationName, teamSlug, username) }
+        }
 
     /** @see addMember */
     suspend fun addMember(
         team: GitHubTeam,
         username: String,
-    ) = addMember(team.organization, team.slug, username)
+    ): ApiResult<Unit> = addMember(team.organization, team.slug, username)
 
-    /** Removes a member from a team. */
+    /** Removes a member from a team. Returns [ApiResult.NotFound] if the team or membership does not exist. */
     suspend fun removeMember(
         organizationName: String,
         teamSlug: String,
         username: String,
-    ) = withContext(Dispatchers.IO) {
-        teamClient.removeMember(organizationName, teamSlug, username)
-    }
+    ): ApiResult<Unit> =
+        withContext(Dispatchers.IO) {
+            apiResult { teamClient.removeMember(organizationName, teamSlug, username) }
+        }
 
     /** @see removeMember */
     suspend fun removeMember(
         team: GitHubTeam,
         username: String,
-    ) = removeMember(team.organization, team.slug, username)
+    ): ApiResult<Unit> = removeMember(team.organization, team.slug, username)
 
     /** Lists all repositories accessible to a team. */
     suspend fun getRepositories(
@@ -87,14 +89,15 @@ class TeamService internal constructor(
         repositoryName: String,
         permission: Permission,
         repoOwner: String = organizationName,
-    ) = withContext(Dispatchers.IO) {
-        teamClient.addRepository(organizationName, teamSlug, repoOwner, repositoryName, permission.value)
-    }
+    ): ApiResult<Unit> =
+        withContext(Dispatchers.IO) {
+            apiResult { teamClient.addRepository(organizationName, teamSlug, repoOwner, repositoryName, permission.value) }
+        }
 
     /** @see addRepository */
     suspend fun addRepository(
         team: GitHubTeam,
         repositoryName: String,
         permission: Permission,
-    ) = addRepository(team.organization, team.slug, repositoryName, permission)
+    ): ApiResult<Unit> = addRepository(team.organization, team.slug, repositoryName, permission)
 }

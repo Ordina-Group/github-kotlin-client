@@ -1,12 +1,12 @@
 package com.soprasteria.github
 
+import com.soprasteria.github.repository.Permission
 import com.soprasteria.github.team.GitHubTeamMember
 import io.kotest.core.spec.style.WordSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
 import io.mockk.every
 import io.mockk.mockk
-import io.mockk.verify
 import kotlinx.serialization.json.Json
 import org.http4k.core.HttpHandler
 import org.http4k.core.Response
@@ -63,25 +63,65 @@ class GitHubTeamSpec :
 
         "teams.addMember" should {
 
-            "call the correct endpoint" {
+            "return Found(Unit) when the member is added successfully" {
                 every { httpClient.invoke(matchUri("/orgs/${Defaults.OWNER}/teams/${team.slug}/memberships/octocat")) }
                     .returns(Response(Status.OK).body("{}"))
 
-                client.teams.addMember(team, "octocat")
+                val result = client.teams.addMember(team, "octocat")
 
-                verify { httpClient.invoke(matchUri("/orgs/${Defaults.OWNER}/teams/${team.slug}/memberships/octocat")) }
+                result.shouldBeInstanceOf<ApiResult.Found<Unit>>()
+                result.getOrThrow() shouldBe Unit
+            }
+
+            "return NotFound when the team or org does not exist" {
+                every { httpClient.invoke(matchUri("/orgs/${Defaults.OWNER}/teams/${team.slug}/memberships/octocat")) }
+                    .returns(Response(Status.NOT_FOUND))
+
+                val result = client.teams.addMember(team, "octocat")
+
+                result.shouldBeInstanceOf<ApiResult.NotFound>()
+            }
+
+            "return Failure when the API returns a server error" {
+                every { httpClient.invoke(matchUri("/orgs/${Defaults.OWNER}/teams/${team.slug}/memberships/octocat")) }
+                    .returns(Response(Status.INTERNAL_SERVER_ERROR))
+
+                val result = client.teams.addMember(team, "octocat")
+
+                result.shouldBeInstanceOf<ApiResult.Failure>()
+                (result as ApiResult.Failure).exception.status shouldBe Status.INTERNAL_SERVER_ERROR
             }
         }
 
         "teams.removeMember" should {
 
-            "call the correct endpoint" {
+            "return Found(Unit) when the member is removed successfully" {
                 every { httpClient.invoke(matchUri("/orgs/${Defaults.OWNER}/teams/${team.slug}/memberships/octocat")) }
                     .returns(Response(Status.NO_CONTENT).body(""))
 
-                client.teams.removeMember(team, "octocat")
+                val result = client.teams.removeMember(team, "octocat")
 
-                verify { httpClient.invoke(matchUri("/orgs/${Defaults.OWNER}/teams/${team.slug}/memberships/octocat")) }
+                result.shouldBeInstanceOf<ApiResult.Found<Unit>>()
+                result.getOrThrow() shouldBe Unit
+            }
+
+            "return NotFound when the membership does not exist" {
+                every { httpClient.invoke(matchUri("/orgs/${Defaults.OWNER}/teams/${team.slug}/memberships/octocat")) }
+                    .returns(Response(Status.NOT_FOUND))
+
+                val result = client.teams.removeMember(team, "octocat")
+
+                result.shouldBeInstanceOf<ApiResult.NotFound>()
+            }
+
+            "return Failure when the API returns a server error" {
+                every { httpClient.invoke(matchUri("/orgs/${Defaults.OWNER}/teams/${team.slug}/memberships/octocat")) }
+                    .returns(Response(Status.INTERNAL_SERVER_ERROR))
+
+                val result = client.teams.removeMember(team, "octocat")
+
+                result.shouldBeInstanceOf<ApiResult.Failure>()
+                (result as ApiResult.Failure).exception.status shouldBe Status.INTERNAL_SERVER_ERROR
             }
         }
 
@@ -98,6 +138,47 @@ class GitHubTeamSpec :
 
                 result.shouldBeInstanceOf<ApiResult.Found<*>>()
                 result.getOrThrow() shouldBe emptyList()
+            }
+        }
+
+        "teams.addRepository" should {
+
+            "return Found(Unit) when the repository is added successfully" {
+                every {
+                    httpClient.invoke(
+                        matchUri("/orgs/${Defaults.OWNER}/teams/${team.slug}/repos/${Defaults.OWNER}/${Defaults.repository().name}"),
+                    )
+                }.returns(Response(Status.NO_CONTENT).body(""))
+
+                val result = client.teams.addRepository(team, Defaults.repository().name, Permission.Push)
+
+                result.shouldBeInstanceOf<ApiResult.Found<Unit>>()
+                result.getOrThrow() shouldBe Unit
+            }
+
+            "return NotFound when the team or repository does not exist" {
+                every {
+                    httpClient.invoke(
+                        matchUri("/orgs/${Defaults.OWNER}/teams/${team.slug}/repos/${Defaults.OWNER}/${Defaults.repository().name}"),
+                    )
+                }.returns(Response(Status.NOT_FOUND))
+
+                val result = client.teams.addRepository(team, Defaults.repository().name, Permission.Push)
+
+                result.shouldBeInstanceOf<ApiResult.NotFound>()
+            }
+
+            "return Failure when the API returns a server error" {
+                every {
+                    httpClient.invoke(
+                        matchUri("/orgs/${Defaults.OWNER}/teams/${team.slug}/repos/${Defaults.OWNER}/${Defaults.repository().name}"),
+                    )
+                }.returns(Response(Status.INTERNAL_SERVER_ERROR))
+
+                val result = client.teams.addRepository(team, Defaults.repository().name, Permission.Push)
+
+                result.shouldBeInstanceOf<ApiResult.Failure>()
+                (result as ApiResult.Failure).exception.status shouldBe Status.INTERNAL_SERVER_ERROR
             }
         }
     })
