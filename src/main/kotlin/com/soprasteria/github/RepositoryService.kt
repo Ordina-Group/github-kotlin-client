@@ -4,6 +4,7 @@ import com.soprasteria.github.internal.GitHubRepositoryClient
 import com.soprasteria.github.internal.GitHubRepositoryClient.Affiliation
 import com.soprasteria.github.repository.GitHubRepository
 import com.soprasteria.github.repository.GitHubRepositoryCollaborator
+import com.soprasteria.github.repository.GitHubRepositoryContributor
 import com.soprasteria.github.repository.GitHubRepositoryTeam
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -92,4 +93,33 @@ class RepositoryService internal constructor(
         repository: GitHubRepository,
         newOwner: String,
     ) = transfer(repository.owner, repository.name, newOwner)
+
+    /** Lists top contributors to a repository (up to maxContributors, defaults to 5). */
+    suspend fun getContributors(
+        owner: String,
+        repositoryName: String,
+        maxContributors: Int = 5,
+    ): ApiResult<List<GitHubRepositoryContributor>> =
+        withContext(Dispatchers.IO) {
+            apiListResult { repoClient.getContributors(owner, repositoryName, maxContributors) }
+        }
+
+    /** @see getContributors */
+    suspend fun getContributors(
+        repository: GitHubRepository,
+        maxContributors: Int = 5,
+    ): ApiResult<List<GitHubRepositoryContributor>> = getContributors(repository.owner, repository.name, maxContributors)
+
+    /** Lists all contributors to a repository (paginated). */
+    suspend fun getAllContributors(
+        owner: String,
+        repositoryName: String,
+    ): ApiResult<List<GitHubRepositoryContributor>> =
+        withContext(Dispatchers.IO) {
+            apiListResult { repoClient.getAllContributors(owner, repositoryName) }
+        }
+
+    /** @see getAllContributors */
+    suspend fun getAllContributors(repository: GitHubRepository): ApiResult<List<GitHubRepositoryContributor>> =
+        getAllContributors(repository.owner, repository.name)
 }

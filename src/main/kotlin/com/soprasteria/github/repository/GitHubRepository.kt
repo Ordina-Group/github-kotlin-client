@@ -9,4 +9,6 @@ data class GitHubRepository(
     val id: Int,
     val name: String,
     @SerialName("full_name") val fullName: String,
+    val visibility: String? = null,
+    @SerialName("pushed_at") val pushedAt: String? = null,
 )
