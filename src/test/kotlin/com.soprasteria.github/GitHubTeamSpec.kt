@@ -1,5 +1,6 @@
 package com.soprasteria.github
 
+import com.soprasteria.github.repository.Permission
 import com.soprasteria.github.team.GitHubTeamMember
 import io.kotest.core.spec.style.WordSpec
 import io.kotest.matchers.shouldBe
@@ -144,10 +145,12 @@ class GitHubTeamSpec :
 
             "return Found(Unit) when the repository is added successfully" {
                 every {
-                    httpClient.invoke(matchUri("/orgs/${Defaults.OWNER}/teams/${team.slug}/repos/${Defaults.OWNER}/${Defaults.repository().name}"))
+                    httpClient.invoke(
+                        matchUri("/orgs/${Defaults.OWNER}/teams/${team.slug}/repos/${Defaults.OWNER}/${Defaults.repository().name}"),
+                    )
                 }.returns(Response(Status.NO_CONTENT).body(""))
 
-                val result = client.teams.addRepository(team, Defaults.repository().name, com.soprasteria.github.repository.Permission.Push)
+                val result = client.teams.addRepository(team, Defaults.repository().name, Permission.Push)
 
                 result.shouldBeInstanceOf<ApiResult.Found<Unit>>()
                 result.getOrThrow() shouldBe Unit
@@ -155,20 +158,24 @@ class GitHubTeamSpec :
 
             "return NotFound when the team or repository does not exist" {
                 every {
-                    httpClient.invoke(matchUri("/orgs/${Defaults.OWNER}/teams/${team.slug}/repos/${Defaults.OWNER}/${Defaults.repository().name}"))
+                    httpClient.invoke(
+                        matchUri("/orgs/${Defaults.OWNER}/teams/${team.slug}/repos/${Defaults.OWNER}/${Defaults.repository().name}"),
+                    )
                 }.returns(Response(Status.NOT_FOUND))
 
-                val result = client.teams.addRepository(team, Defaults.repository().name, com.soprasteria.github.repository.Permission.Push)
+                val result = client.teams.addRepository(team, Defaults.repository().name, Permission.Push)
 
                 result.shouldBeInstanceOf<ApiResult.NotFound>()
             }
 
             "return Failure when the API returns a server error" {
                 every {
-                    httpClient.invoke(matchUri("/orgs/${Defaults.OWNER}/teams/${team.slug}/repos/${Defaults.OWNER}/${Defaults.repository().name}"))
+                    httpClient.invoke(
+                        matchUri("/orgs/${Defaults.OWNER}/teams/${team.slug}/repos/${Defaults.OWNER}/${Defaults.repository().name}"),
+                    )
                 }.returns(Response(Status.INTERNAL_SERVER_ERROR))
 
-                val result = client.teams.addRepository(team, Defaults.repository().name, com.soprasteria.github.repository.Permission.Push)
+                val result = client.teams.addRepository(team, Defaults.repository().name, Permission.Push)
 
                 result.shouldBeInstanceOf<ApiResult.Failure>()
                 (result as ApiResult.Failure).exception.status shouldBe Status.INTERNAL_SERVER_ERROR
