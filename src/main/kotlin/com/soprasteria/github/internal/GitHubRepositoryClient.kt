@@ -7,12 +7,12 @@ import com.soprasteria.github.repository.GitHubRepositoryContributor
 import com.soprasteria.github.repository.GitHubRepositoryTeam
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.SerializationException
 import org.http4k.core.Body
 import org.http4k.core.HttpHandler
 import org.http4k.core.Response
 import org.http4k.core.Status
 import org.http4k.format.KotlinxSerialization.auto
-import org.http4k.lens.BiDiBodyLens
 import org.http4k.lens.Header
 import org.slf4j.LoggerFactory
 
@@ -97,14 +97,13 @@ internal class GitHubRepositoryClient(
         maxContributors: Int = 5,
     ): List<GitHubRepositoryContributor> {
         logger.debug("Fetching contributors for '{}/{}'", owner, repositoryName)
-        val lens = Body.auto<List<GitHubRepositoryContributor>>().toLens()
         val request =
             GetRequest(GitHubApiEndpoints.repositoryContributors(owner, repositoryName))
                 .query("per_page", maxContributors.toString())
         val response = client(request)
 
         return when (response.status) {
-            Status.OK -> parseContributorsResponse(response, lens, owner, repositoryName)
+            Status.OK -> parseContributorsResponse(response, "contributors for '$owner/$repositoryName'")
             Status.NO_CONTENT -> {
                 logger.debug("No contributors found for '{}/{}'", owner, repositoryName)
                 emptyList()
@@ -122,15 +121,14 @@ internal class GitHubRepositoryClient(
         repositoryName: String,
     ): List<GitHubRepositoryContributor> {
         logger.debug("Fetching all contributors for '{}/{}'", owner, repositoryName)
-        val lens = Body.auto<List<GitHubRepositoryContributor>>().toLens()
         val request =
             PaginatedRequest<GitHubRepositoryContributor>(
                 GetRequest(GitHubApiEndpoints.repositoryContributors(owner, repositoryName)),
-                lens,
-                { response, page ->
+                pageResult = { response, page ->
                     when (response.status) {
                         Status.OK -> {
-                            val contributors = parseContributorsResponse(response, lens, owner, repositoryName, page)
+                            val contributors =
+                                parseContributorsResponse(response, "contributors page $page for '$owner/$repositoryName'")
                             PaginatedPage(
                                 items = contributors,
                                 hasNext = contributors.isNotEmpty() && Header.LINK(response).containsKey("next"),
@@ -140,16 +138,7 @@ internal class GitHubRepositoryClient(
                         Status.NOT_FOUND,
                         Status.FORBIDDEN,
                         -> PaginatedPage(emptyList(), hasNext = false)
-                        else -> {
-                            logger.warn(
-                                "Unexpected status {} for contributors page {} of '{}/{}'",
-                                response.status,
-                                page,
-                                owner,
-                                repositoryName,
-                            )
-                            PaginatedPage(emptyList(), hasNext = false)
-                        }
+                        else -> throw GitHubApiException.from(response, "getAllContributors($owner, $repositoryName)")
                     }
                 },
             )
@@ -158,27 +147,14 @@ internal class GitHubRepositoryClient(
 
     private fun parseContributorsResponse(
         response: Response,
-        lens: BiDiBodyLens<List<GitHubRepositoryContributor>>,
-        owner: String,
-        repositoryName: String,
-        page: Int? = null,
+        context: String,
     ): List<GitHubRepositoryContributor> =
         try {
             val bodyString = response.bodyString()
-            if (bodyString.isBlank()) {
-                if (page == null) {
-                    logger.debug("Empty contributors list for '{}/{}'", owner, repositoryName)
-                }
-                emptyList()
-            } else {
-                lens(response)
-            }
-        } catch (e: kotlinx.serialization.SerializationException) {
-            if (page == null) {
-                logger.warn("Failed to parse contributors for '{}/{}': {}", owner, repositoryName, e.message)
-            } else {
-                logger.warn("Failed to parse contributors page {} for '{}/{}': {}", page, owner, repositoryName, e.message)
-            }
+            val lens = Body.auto<List<GitHubRepositoryContributor>>().toLens()
+            lens(Response(response.status).body(bodyString))
+        } catch (e: SerializationException) {
+            logger.warn("Failed to parse {}: {}", context, e.message)
             emptyList()
         }
 

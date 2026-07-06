@@ -12,6 +12,7 @@ import kotlinx.serialization.json.Json
 import org.http4k.core.HttpHandler
 import org.http4k.core.Response
 import org.http4k.core.Status
+import java.io.ByteArrayInputStream
 
 class GitHubRepositorySpec :
     WordSpec({
@@ -79,12 +80,14 @@ class GitHubRepositorySpec :
 
             "return Found with contributors when a single page is returned" {
                 val contributor = Defaults.contributor()
+                val body = Json.encodeToString(listOf(contributor))
+                val bodyBytes = body.encodeToByteArray()
 
                 every {
                     httpClient.invoke(
                         matchUri("/repos/${repo.owner}/${repo.name}/contributors?page=1&per_page=100"),
                     )
-                }.returns(Response(Status.OK).body(Json.encodeToString(listOf(contributor))))
+                }.returns(Response(Status.OK).body(ByteArrayInputStream(bodyBytes), bodyBytes.size.toLong()))
 
                 val result = client.repositories.getAllContributors(repo)
 
@@ -132,7 +135,7 @@ class GitHubRepositorySpec :
                 result.getOrThrow() shouldBe emptyList()
             }
 
-            "return contributors collected before a later page fails" {
+            "return Failure when a later page fails" {
                 val contributor = Defaults.contributor()
                 val linkHeader =
                     """<https://api.github.com/repos/${repo.owner}/${repo.name}/contributors?page=2>; rel="next""""
@@ -154,8 +157,8 @@ class GitHubRepositorySpec :
 
                 val result = client.repositories.getAllContributors(repo)
 
-                result.shouldBeInstanceOf<ApiResult.Found<List<GitHubRepositoryContributor>>>()
-                result.getOrThrow() shouldBe listOf(contributor)
+                result.shouldBeInstanceOf<ApiResult.Failure>()
+                (result as ApiResult.Failure).exception.status shouldBe Status.INTERNAL_SERVER_ERROR
             }
         }
     })

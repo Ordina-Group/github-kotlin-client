@@ -77,14 +77,20 @@ data class PaginatedPage<T : Any>(
 
 class PaginatedRequest<T : Any>(
     private val baseRequest: Request,
-    private val lens: BiDiBodyLens<List<T>>,
+    private val lens: BiDiBodyLens<List<T>>? = null,
     pageResult: ((Response, Int) -> PaginatedPage<T>)? = null,
 ) {
+    init {
+        require(pageResult != null || lens != null) {
+            "A lens is required when no custom pageResult is provided"
+        }
+    }
+
     private val getPageResult = pageResult ?: { response: Response, _: Int -> defaultPageResult(response) }
 
     private fun defaultPageResult(response: Response): PaginatedPage<T> =
         when (response.status) {
-            Status.OK -> PaginatedPage(lens(response), Header.LINK(response).containsKey("next"))
+            Status.OK -> PaginatedPage(requireNotNull(lens)(response), Header.LINK(response).containsKey("next"))
             else -> throw GitHubApiException.from(response, baseRequest.uri.toString())
         }
 
