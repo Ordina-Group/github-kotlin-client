@@ -3,6 +3,7 @@ package com.soprasteria.github
 import com.soprasteria.github.organization.GitHubOrganization
 import com.soprasteria.github.repository.GitHubRepository
 import com.soprasteria.github.repository.GitHubRepositoryContributor
+import com.soprasteria.github.repository.GitHubRepositoryTeam
 import com.soprasteria.github.team.GitHubTeam
 import com.soprasteria.github.team.GitHubTeamMember
 
@@ -50,6 +51,30 @@ object Defaults {
         type = "User",
         siteAdmin = false,
         contributions = contributions,
+    )
+
+    fun repositoryTeam(
+        organization: String = OWNER,
+        id: Int = 1,
+        name: String = "Justice League",
+        slug: String = "justice-league",
+        description: String = "The best team",
+        privacy: String = "secret",
+        permission: String = "pull",
+    ) = GitHubRepositoryTeam(
+        organization = organization,
+        id = id,
+        nodeId = "T_kwDOA$id",
+        url = "https://api.github.com/teams/$id",
+        htmlUrl = "https://github.com/orgs/$organization/teams/$slug",
+        name = name,
+        slug = slug,
+        description = description,
+        privacy = privacy,
+        notificationSetting = "notifications_enabled",
+        permission = permission,
+        membersUrl = "https://api.github.com/teams/$id/members{/member}",
+        repositoriesUrl = "https://api.github.com/teams/$id/repos",
     )
 
     fun team() =
