@@ -24,7 +24,7 @@ class GitHubRepositorySpec :
         "repositories.getTeams" should {
 
             "return Found with an empty list when the repository has no teams" {
-                every { httpClient.invoke(matchUri("/repos/${repo.owner}/${repo.name}/teams")) }
+                every { httpClient.invoke(matchUri("/repos/${repo.owner}/${repo.name}/teams?page=1&per_page=100")) }
                     .returns(Response(Status.OK).body("[]"))
 
                 val result = client.repositories.getTeams(repo)
@@ -33,8 +33,93 @@ class GitHubRepositorySpec :
                 result.getOrThrow() shouldBe emptyList()
             }
 
+            "follow Link rel=next headers across multiple pages" {
+                val firstTeam =
+                    """
+                    {
+                      "id": 1,
+                      "node_id": "T_kwDOA1",
+                      "url": "https://api.github.com/teams/1",
+                      "html_url": "https://github.com/orgs/${repo.owner}/teams/justice-league",
+                      "name": "Justice League",
+                      "slug": "justice-league",
+                      "description": "The best team",
+                      "privacy": "secret",
+                      "notification_setting": "notifications_enabled",
+                      "permission": "pull",
+                      "members_url": "https://api.github.com/teams/1/members{/member}",
+                      "repositories_url": "https://api.github.com/teams/1/repos"
+                    }
+                    """.trimIndent()
+                val secondTeam =
+                    """
+                    {
+                      "id": 2,
+                      "node_id": "T_kwDOA2",
+                      "url": "https://api.github.com/teams/2",
+                      "html_url": "https://github.com/orgs/${repo.owner}/teams/avengers",
+                      "name": "Avengers",
+                      "slug": "avengers",
+                      "description": "Earth's mightiest heroes",
+                      "privacy": "closed",
+                      "notification_setting": "notifications_enabled",
+                      "permission": "push",
+                      "members_url": "https://api.github.com/teams/2/members{/member}",
+                      "repositories_url": "https://api.github.com/teams/2/repos"
+                    }
+                    """.trimIndent()
+                val linkHeader =
+                    """<https://api.github.com/repos/${repo.owner}/${repo.name}/teams?page=2>; rel="next""""
+
+                every { httpClient.invoke(matchUri("/repos/${repo.owner}/${repo.name}/teams?page=1&per_page=100")) }
+                    .returns(
+                        Response(Status.OK)
+                            .header("Link", linkHeader)
+                            .body("[$firstTeam]"),
+                    )
+                every { httpClient.invoke(matchUri("/repos/${repo.owner}/${repo.name}/teams?page=2&per_page=100")) }
+                    .returns(Response(Status.OK).body("[$secondTeam]"))
+
+                val result = client.repositories.getTeams(repo)
+
+                result.shouldBeInstanceOf<ApiResult.Found<List<GitHubRepositoryTeam>>>()
+                result.getOrThrow() shouldBe
+                    listOf(
+                        GitHubRepositoryTeam(
+                            organization = repo.owner,
+                            id = 1,
+                            nodeId = "T_kwDOA1",
+                            url = "https://api.github.com/teams/1",
+                            htmlUrl = "https://github.com/orgs/${repo.owner}/teams/justice-league",
+                            name = "Justice League",
+                            slug = "justice-league",
+                            description = "The best team",
+                            privacy = "secret",
+                            notificationSetting = "notifications_enabled",
+                            permission = "pull",
+                            membersUrl = "https://api.github.com/teams/1/members{/member}",
+                            repositoriesUrl = "https://api.github.com/teams/1/repos",
+                        ),
+                        GitHubRepositoryTeam(
+                            organization = repo.owner,
+                            id = 2,
+                            nodeId = "T_kwDOA2",
+                            url = "https://api.github.com/teams/2",
+                            htmlUrl = "https://github.com/orgs/${repo.owner}/teams/avengers",
+                            name = "Avengers",
+                            slug = "avengers",
+                            description = "Earth's mightiest heroes",
+                            privacy = "closed",
+                            notificationSetting = "notifications_enabled",
+                            permission = "push",
+                            membersUrl = "https://api.github.com/teams/2/members{/member}",
+                            repositoriesUrl = "https://api.github.com/teams/2/repos",
+                        ),
+                    )
+            }
+
             "return Failure when the API returns a server error" {
-                every { httpClient.invoke(matchUri("/repos/${repo.owner}/${repo.name}/teams")) }
+                every { httpClient.invoke(matchUri("/repos/${repo.owner}/${repo.name}/teams?page=1&per_page=100")) }
                     .returns(Response(Status.INTERNAL_SERVER_ERROR))
 
                 val result = client.repositories.getTeams(repo)
