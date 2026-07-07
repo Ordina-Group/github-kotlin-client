@@ -47,14 +47,8 @@ internal class GitHubRepositoryClient(
         owner: String,
         repositoryName: String,
     ): List<GitHubRepositoryTeam> {
-        val lens = Body.auto<List<GetTeamResponse>>().toLens()
-        val request = GetRequest(GitHubApiEndpoints.repositoryTeams(owner, repositoryName))
-        val response = client(request)
-
-        return when (response.status) {
-            Status.OK -> lens(response).map { it.toRepositoryTeam(owner) }
-            else -> throw GitHubApiException.from(response, "getTeams($owner, $repositoryName)")
-        }
+        val request = PaginatedRequest<GetTeamResponse>(GitHubApiEndpoints.repositoryTeams(owner, repositoryName))
+        return request(client).map { it.toRepositoryTeam(owner) }
     }
 
     fun getCollaborators(
