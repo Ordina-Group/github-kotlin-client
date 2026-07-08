@@ -95,7 +95,7 @@ class OrganizationService internal constructor(
     /** @see getMembers */
     suspend fun getMembers(org: GitHubOrganization): ApiResult<List<GitHubOrganizationMember>> = getMembers(org.login)
 
-    /** Invites a user (by GitHub user ID) to an organization. */
+    /** Invites a user (by GitHub user ID) to an organization. Returns [ApiResult.NotFound] for HTTP 404. */
     suspend fun invite(
         organizationName: String,
         inviteeId: Int,
