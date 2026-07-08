@@ -36,16 +36,22 @@ All service methods are `suspend` functions. Call them from a coroutine or use `
 ### Creating a client
 
 ```kotlin
-val client = GitHubClient.create(token = System.getenv("GITHUB_TOKEN"))
+GitHubClient.create(token = System.getenv("GITHUB_TOKEN")).use { client ->
+    val org = client.organizations.get("my-org").getOrThrow()
+    println(org.login)
+}
 ```
 
 To target a GitHub Enterprise Server instance, pass the base URL:
 
 ```kotlin
-val client = GitHubClient.create(
+GitHubClient.create(
     token = System.getenv("GITHUB_TOKEN"),
     baseUrl = "https://github.example.com/api/v3"
-)
+).use { client ->
+    val org = client.organizations.get("my-org").getOrThrow()
+    println(org.login)
+}
 ```
 
 `GitHubClient` exposes three service objects:
