@@ -2,19 +2,23 @@ package com.soprasteria.github
 
 import com.soprasteria.github.organization.GitHubOrganization
 import com.soprasteria.github.repository.GitHubRepository
+import io.kotest.assertions.throwables.shouldNotThrowAny
 import io.kotest.core.spec.style.WordSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.verify
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.http4k.core.Body
 import org.http4k.core.HttpHandler
+import org.http4k.core.Request
 import org.http4k.core.Response
 import org.http4k.core.Status
 import org.http4k.core.with
 import org.http4k.format.KotlinxSerialization.auto
+import java.io.Closeable
 
 class GitHubClientSpec :
     WordSpec({
@@ -114,6 +118,52 @@ class GitHubClientSpec :
 
                 result.shouldBeInstanceOf<ApiResult.Found<List<GitHubRepository>>>()
                 result.getOrThrow().size shouldBe 2
+            }
+        }
+
+        "close" should {
+
+            "close the internally owned resource without throwing and remain idempotent" {
+                val closeable = mockk<Closeable>(relaxed = true)
+                val closeableClient = GitHubClient(httpClient = httpClient, initialCloseAction = closeable)
+
+                shouldNotThrowAny {
+                    closeableClient.close()
+                    closeableClient.close()
+                }
+
+                verify(exactly = 1) { closeable.close() }
+            }
+
+            "not close a user supplied http handler" {
+                val userSuppliedHandler =
+                    object : HttpHandler, Closeable {
+                        var closed = false
+
+                        override fun invoke(request: Request) = Response(Status.OK)
+
+                        override fun close() {
+                            closed = true
+                        }
+                    }
+                val client = GitHubClient(userSuppliedHandler)
+
+                shouldNotThrowAny { client.close() }
+
+                userSuppliedHandler.closed shouldBe false
+            }
+
+            "close the owned resource when used with use" {
+                val closeable = mockk<Closeable>(relaxed = true)
+                val closeableClient = GitHubClient(httpClient = httpClient, initialCloseAction = closeable)
+
+                val result =
+                    shouldNotThrowAny {
+                        closeableClient.use { "done" }
+                    }
+
+                result shouldBe "done"
+                verify(exactly = 1) { closeable.close() }
             }
         }
     })
