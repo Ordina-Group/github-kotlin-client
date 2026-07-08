@@ -121,6 +121,29 @@ class GitHubClientSpec :
             }
         }
 
+        "organizations.invite" should {
+
+            "return NotFound when the organization does not exist" {
+                every { httpClient.invoke(matchUri("/orgs/fake-org/invitations")) } returns Response(Status.NOT_FOUND)
+
+                client.organizations.invite("fake-org", inviteeId = 1234567) shouldBe ApiResult.NotFound
+            }
+
+            "return Failure with the GitHub error message when validation fails" {
+                every { httpClient.invoke(matchUri("/orgs/github/invitations")) } returns
+                    Response(Status.UNPROCESSABLE_ENTITY)
+                        .body("""{"message":"Validation Failed","errors":[{"message":"user is already a member"}]}""")
+
+                val result = client.organizations.invite("github", inviteeId = 1234567)
+
+                result.shouldBeInstanceOf<ApiResult.Failure>()
+                val exception = (result as ApiResult.Failure).exception
+                exception.status shouldBe Status.UNPROCESSABLE_ENTITY
+                exception.message shouldBe
+                    "GitHub API error during invite(github, 1234567): HTTP 422 Unprocessable Entity: Validation Failed"
+            }
+        }
+
         "close" should {
 
             "close the internally owned resource without throwing and remain idempotent" {

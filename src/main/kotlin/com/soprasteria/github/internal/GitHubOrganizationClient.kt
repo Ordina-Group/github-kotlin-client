@@ -100,7 +100,7 @@ internal class GitHubOrganizationClient(
         return when (response.status) {
             Status.CREATED -> lens(response)
             Status.NOT_FOUND -> null
-            Status.UNPROCESSABLE_ENTITY -> null
+            Status.UNPROCESSABLE_ENTITY -> throw GitHubApiException.from(response, "invite($organizationName, $inviteeId)")
             else -> throw GitHubApiException.from(response, "invite($organizationName, $inviteeId)")
         }
     }
