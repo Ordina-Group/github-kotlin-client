@@ -125,7 +125,7 @@ class GitHubClientSpec :
 
             "close the internally owned resource without throwing and remain idempotent" {
                 val closeable = mockk<Closeable>(relaxed = true)
-                val closeableClient = GitHubClient(httpClient = httpClient, closeAction = closeable)
+                val closeableClient = GitHubClient(httpClient = httpClient, initialCloseAction = closeable)
 
                 shouldNotThrowAny {
                     closeableClient.close()
@@ -151,6 +151,19 @@ class GitHubClientSpec :
                 shouldNotThrowAny { client.close() }
 
                 userSuppliedHandler.closed shouldBe false
+            }
+
+            "close the owned resource when used with use" {
+                val closeable = mockk<Closeable>(relaxed = true)
+                val closeableClient = GitHubClient(httpClient = httpClient, initialCloseAction = closeable)
+
+                val result =
+                    shouldNotThrowAny {
+                        closeableClient.use { "done" }
+                    }
+
+                result shouldBe "done"
+                verify(exactly = 1) { closeable.close() }
             }
         }
     })

@@ -7,19 +7,20 @@ import org.http4k.core.Uri
 import org.http4k.core.then
 import org.http4k.filter.ClientFilters
 import java.io.Closeable
+import java.util.concurrent.atomic.AtomicReference
 
 class GitHubClient internal constructor(
     httpClient: HttpHandler,
-    private var closeAction: Closeable? = null,
+    initialCloseAction: Closeable? = null,
 ) : Closeable {
+    private val closeAction = AtomicReference<Closeable?>(initialCloseAction)
+
     val organizations = OrganizationService(httpClient)
     val repositories = RepositoryService(httpClient)
     val teams = TeamService(httpClient)
 
     override fun close() {
-        val ownedResource = closeAction ?: return
-        closeAction = null
-        ownedResource.close()
+        closeAction.getAndSet(null)?.close()
     }
 
     companion object {
@@ -35,13 +36,18 @@ class GitHubClient internal constructor(
         ): GitHubClient {
             val apacheClient =
                 PreCannedApacheHttpClients.defaultApacheHttpClient()
-            val httpClient: HttpHandler =
-                ClientFilters
-                    .SetBaseUriFrom(Uri.of(baseUrl))
-                    .then(ClientFilters.BearerAuth(token))
-                    .then(ApacheClient(apacheClient))
+            return try {
+                val httpClient: HttpHandler =
+                    ClientFilters
+                        .SetBaseUriFrom(Uri.of(baseUrl))
+                        .then(ClientFilters.BearerAuth(token))
+                        .then(ApacheClient(apacheClient))
 
-            return GitHubClient(httpClient, apacheClient)
+                GitHubClient(httpClient, apacheClient)
+            } catch (e: Exception) {
+                apacheClient.close()
+                throw e
+            }
         }
     }
 }
